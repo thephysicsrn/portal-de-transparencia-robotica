@@ -4,6 +4,7 @@ export interface User {
   id: string
   name: string
   email: string
+  passwordHash?: string
   role: UserRole
   teamId: string | null
   title?: string
@@ -61,7 +62,9 @@ export interface Expense {
   supplier: string
   receiptUrl?: string | null
   receiptFileName?: string | null
+  invoiceNumber?: string
   purchaseRequestId?: string | null
+  originPurchaseRequestId?: string | null
   createdBy: string
   createdByName: string
   createdAt: string
@@ -79,10 +82,13 @@ export type PurchaseStatus =
 
 export interface PurchaseItem {
   id: string
-  name: string
+  name?: string
+  description?: string
   quantity: number
-  unitPriceEstimated: number
-  totalEstimated: number
+  unitPriceEstimated?: number
+  estimatedUnitPrice?: number
+  totalEstimated?: number
+  linkOrSupplier?: string
   referenceLink?: string
 }
 
@@ -93,7 +99,7 @@ export interface PurchaseRequest {
   title: string
   items: PurchaseItem[]
   estimatedTotal: number
-  purpose: string
+  purpose?: string
   justification: string
   urgency: 'baixa' | 'media' | 'alta' | 'critica'
   status: PurchaseStatus
@@ -106,6 +112,7 @@ export interface PurchaseRequest {
   finalReceiptUrl?: string | null
   finalReceiptFileName?: string | null
   expenseId?: string | null
+  timeline?: any[]
   createdBy: string
   createdByName: string
   createdAt: string

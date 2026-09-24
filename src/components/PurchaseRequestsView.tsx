@@ -322,7 +322,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
     const term = searchTerm.toLowerCase()
     return (
       r.title.toLowerCase().includes(term) ||
-      r.purpose.toLowerCase().includes(term) ||
+      (r.purpose || '').toLowerCase().includes(term) ||
       (r.teamName && r.teamName.toLowerCase().includes(term))
     )
   })

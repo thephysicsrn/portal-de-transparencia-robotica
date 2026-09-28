@@ -10,9 +10,13 @@ import { PurchaseRequestsView } from './components/PurchaseRequestsView'
 import { AccountabilityView } from './components/AccountabilityView'
 import { AuditHistoryView } from './components/AuditHistoryView'
 import { TeamsManagementView } from './components/TeamsManagementView'
+import { AdminView } from './components/AdminView'
 import type { PurchaseRequest } from './types'
 import { Info } from 'lucide-react'
 import './App.css'
+
+// Check if we are on the /admin route
+const isAdminRoute = window.location.pathname === '/admin'
 
 
 const AppMain: React.FC = () => {
@@ -78,16 +82,16 @@ const AppMain: React.FC = () => {
 
       {/* Main Viewport */}
       <main className="main-content">
-        {/* Demonstration banner with clear disclaimer */}
+        {/* Environment status banner */}
         <div className="demo-banner">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Info size={18} color="var(--accent-cyan)" />
             <span>
-              <strong>Ambiente de Demonstração Interativo:</strong> Os dados exibidos (patrocínios, notas fiscais, solicitações) são demonstrativos e podem ser modificados ou restaurados livremente a qualquer momento.
+              <strong>Base Pronta para Dados Originais:</strong> Dados fictícios removidos. Fluxo ativo com <em>Painel do Aluno</em> (solicitações), <em>Painel do Técnico</em> (aprovações de compras) e <em>Supervisão Geral</em> pela Responsável Técnica.
             </span>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-            Atualização Reativa Sem Recarga
+          <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', whiteSpace: 'nowrap', fontWeight: 600 }}>
+            ● Sistema em Operação
           </span>
         </div>
 
@@ -162,6 +166,10 @@ const AppMain: React.FC = () => {
 }
 
 export default function App() {
+  if (isAdminRoute) {
+    return <AdminView />
+  }
+
   return (
     <ToastProvider>
       <AuthProvider>

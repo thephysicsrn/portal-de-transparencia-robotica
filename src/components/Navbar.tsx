@@ -12,6 +12,7 @@ import {
   RotateCcw,
   ShieldCheck,
   UserCheck,
+  GraduationCap,
   Building
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -25,27 +26,35 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDataRefreshNeeded }) => {
-  const { user, logout, selectedTeamId, setSelectedTeamId, teams, isTechnicalLead } = useAuth()
+  const { user, logout, selectedTeamId, setSelectedTeamId, teams, isTechnicalLead, isCoach, isStudent } = useAuth()
   const { showToast } = useToast()
 
   const handleResetDemo = async () => {
-    if (!confirm('Deseja restaurar os dados de demonstração iniciais do sistema?')) return
+    if (!confirm('Deseja reinicializar a base de dados mantendo o estado limpo?')) return
     try {
       await api.resetDemoData()
-      showToast('Dados de demonstração restaurados com sucesso!', 'success')
+      showToast('Base de dados limpa com sucesso!', 'success')
       onDataRefreshNeeded()
     } catch (err: any) {
-      showToast(err.message || 'Erro ao restaurar dados.', 'error')
+      showToast(err.message || 'Erro ao reinicializar dados.', 'error')
     }
   }
 
   const navItems = [
-    { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
-    { id: 'sponsorships', label: 'Patrocínios', icon: HandCoins },
-    { id: 'expenses', label: 'Despesas', icon: Receipt },
-    { id: 'purchases', label: 'Solicitações de Compra', icon: ShoppingCart },
+    {
+      id: 'dashboard',
+      label: isStudent ? 'Painel do Aluno' : isCoach ? 'Painel do Técnico' : 'Painel de Supervisão',
+      icon: LayoutDashboard
+    },
+    {
+      id: 'purchases',
+      label: isStudent ? 'Solicitar Compras' : isCoach ? 'Aprovação de Compras' : 'Acompanhamento de Compras',
+      icon: ShoppingCart
+    },
     { id: 'accountability', label: 'Prestação de Contas', icon: FileSpreadsheet },
-    { id: 'audit', label: 'Histórico & Auditoria', icon: History },
+    { id: 'sponsorships', label: isStudent ? 'Patrocínios (Transparência)' : 'Patrocínios', icon: HandCoins },
+    ...(isStudent ? [] : [{ id: 'expenses', label: 'Despesas', icon: Receipt }]),
+    ...(isStudent ? [] : [{ id: 'audit', label: 'Histórico & Auditoria', icon: History }]),
     ...(isTechnicalLead ? [{ id: 'teams', label: 'Equipes', icon: Users }] : [])
   ]
 
@@ -110,11 +119,15 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
                 <span className="user-role-tag">
                   {isTechnicalLead ? (
                     <span style={{ color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <ShieldCheck size={12} /> Responsável Técnica
+                      <ShieldCheck size={12} /> Responsável Técnica (Supervisão Geral)
+                    </span>
+                  ) : isCoach ? (
+                    <span style={{ color: 'var(--accent-emerald)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <UserCheck size={12} /> Técnico da Equipe
                     </span>
                   ) : (
-                    <span style={{ color: 'var(--accent-emerald)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                      <UserCheck size={12} /> Representante de Equipe
+                    <span style={{ color: 'var(--accent-indigo)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                      <GraduationCap size={12} /> Aluno da Equipe
                     </span>
                   )}
                 </span>

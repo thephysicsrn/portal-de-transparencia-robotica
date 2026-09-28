@@ -46,7 +46,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
   refreshTrigger,
   onDataChanged
 }) => {
-  const { user, selectedTeamId, isTechnicalLead } = useAuth()
+  const { user, selectedTeamId, isTechnicalLead, isCoach, isStudent } = useAuth()
   const { showToast } = useToast()
 
   const [requests, setRequests] = useState<PurchaseRequest[]>([])
@@ -134,13 +134,13 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
 
   useEffect(() => {
     if (selectedRequestFromDash) {
-      if (isTechnicalLead && ['enviada', 'em_analise', 'ajuste_solicitado'].includes(selectedRequestFromDash.status)) {
+      if (isCoach && ['enviada', 'em_analise', 'ajuste_solicitado'].includes(selectedRequestFromDash.status)) {
         openDecisionModal(selectedRequestFromDash)
-      } else if (['compra_em_andamento', 'aprovada'].includes(selectedRequestFromDash.status)) {
+      } else if (isCoach && ['compra_em_andamento', 'aprovada'].includes(selectedRequestFromDash.status)) {
         openCompleteModal(selectedRequestFromDash)
       }
     }
-  }, [selectedRequestFromDash, isTechnicalLead])
+  }, [selectedRequestFromDash, isCoach])
 
 
   // Items manipulation
@@ -204,7 +204,12 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
         ...formData,
         estimatedTotal: totalEstimated
       })
-      showToast('Solicitação de compra enviada com sucesso! Aguardando análise da Responsável Técnica.', 'success')
+      showToast(
+        isStudent
+          ? 'Solicitação de compra enviada com sucesso! Seu técnico foi notificado para avaliar.'
+          : 'Solicitação de compra registrada com sucesso!',
+        'success'
+      )
       onCloseModal()
       setFormData({
         title: '',
@@ -343,15 +348,23 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
         <div>
           <h1 className="page-title">
             <ShoppingCart size={28} color="var(--accent-cyan)" />
-            Solicitações & Gestão de Compras
+            {isStudent
+              ? 'Painel do Aluno: Solicitações de Compras'
+              : isCoach
+              ? 'Painel do Técnico: Aprovação & Gestão de Compras'
+              : 'Supervisão Geral: Acompanhamento de Compras'}
           </h1>
           <p>
-            Fluxo de requisição, análise técnica, aprovação de orçamento e comprovação de aquisições com controle de saldo real.
+            {isStudent
+              ? 'Solicite peças, eletrônica e insumos para o robô da equipe. O técnico analisará sua solicitação para aprovar ou solicitar ajustes.'
+              : isCoach
+              ? 'Avalie as solicitações dos alunos da sua equipe, aprove o orçamento de compra ou solicite ajustes com parecer técnico fundamentado.'
+              : 'Acompanhamento e auditoria em tempo real das solicitações de compras deliberadas pelos técnicos das equipes.'}
           </p>
         </div>
 
         <button className="btn btn-primary" onClick={onOpenModal}>
-          <PlusCircle size={16} /> Nova Solicitação
+          <PlusCircle size={16} /> {isStudent ? 'Nova Solicitação de Compra' : 'Nova Solicitação'}
         </button>
       </div>
 
@@ -422,8 +435,8 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
             ) : (
               filtered.map(req => {
                 const statusCfg = getPurchaseStatusConfig(req.status)
-                const canReview = isTechnicalLead && ['enviada', 'em_analise', 'ajuste_solicitado'].includes(req.status)
-                const canComplete = ['compra_em_andamento', 'aprovada'].includes(req.status)
+                const canReview = isCoach && ['enviada', 'em_analise', 'ajuste_solicitado'].includes(req.status)
+                const canComplete = isCoach && ['compra_em_andamento', 'aprovada'].includes(req.status)
 
                 return (
                   <tr key={req.id}>
@@ -437,6 +450,12 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
                       <div style={{ fontSize: '0.775rem', color: 'var(--text-dim)', marginTop: 2 }}>
                         {req.purpose}
                       </div>
+                      <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <span>Solicitado por: <strong>{req.createdByName || 'Aluno'}</strong></span>
+                        {req.reviewedByName && (
+                          <span>• Parecer do Técnico: <strong style={{ color: 'var(--accent-emerald)' }}>{req.reviewedByName}</strong></span>
+                        )}
+                      </div>
                       {req.reviewNotes && (
                         <div style={{
                           marginTop: 6,
@@ -446,7 +465,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
                           borderRadius: 4,
                           borderLeft: `3px solid ${statusCfg.color}`
                         }}>
-                          <strong>Parecer:</strong> {req.reviewNotes}
+                          <strong>Parecer Técnico:</strong> {req.reviewNotes}
                         </div>
                       )}
                     </td>
@@ -500,14 +519,14 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                        {/* Technical Lead Decision Button */}
+                        {/* Team Coach Decision Button */}
                         {canReview && (
                           <button
                             className="btn btn-primary btn-sm"
                             onClick={() => openDecisionModal(req)}
                             title="Avaliar solicitação (Aprovar, Rejeitar ou Pedir Ajuste)"
                           >
-                            <ShieldCheck size={14} /> Avaliar
+                            <ShieldCheck size={14} /> Avaliar (Técnico)
                           </button>
                         )}
 
@@ -520,6 +539,16 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
                           >
                             <FileCheck2 size={14} /> Concluir Compra
                           </button>
+                        )}
+
+                        {!canReview && !canComplete && !req.finalReceiptUrl && (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontStyle: 'italic' }}>
+                            {req.status === 'enviada' || req.status === 'em_analise'
+                              ? 'Aguardando técnico'
+                              : req.status === 'ajuste_solicitado'
+                              ? 'Ajuste solicitado'
+                              : 'Concluído'}
+                          </span>
                         )}
 
                         {/* View NF if completed */}
@@ -752,14 +781,14 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
         </div>
       )}
 
-      {/* Decision Modal (Technical Lead) */}
+      {/* Decision Modal (Team Coach) */}
       {reviewingRequest && (
         <div className="modal-overlay" onClick={() => setReviewingRequest(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title">
-                <ShieldCheck size={20} color="var(--accent-cyan)" />
-                <span>Parecer Técnico & Decisão de Compra</span>
+                <ShieldCheck size={20} color="var(--accent-emerald)" />
+                <span>Avaliação & Decisão do Técnico da Equipe</span>
               </div>
               <button
                 type="button"

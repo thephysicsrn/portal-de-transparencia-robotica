@@ -15,7 +15,11 @@ interface AuthContextType {
   refreshUser: () => Promise<void>
   refreshTeams: () => Promise<void>
   isTechnicalLead: boolean
+  isCoach: boolean
+  isStudent: boolean
   isTeamRep: boolean
+  canApprovePurchases: boolean
+  canManageFinances: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,7 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true)
 
   const isTechnicalLead = user?.role === 'technical_lead'
-  const isTeamRep = user?.role === 'team_rep'
+  const isCoach = user?.role === 'team_coach' || user?.role === 'team_rep'
+  const isStudent = user?.role === 'student'
+  const isTeamRep = isCoach
+  const canApprovePurchases = isCoach
+  const canManageFinances = isTechnicalLead || isCoach
 
   const loadTeams = async () => {
     try {
@@ -74,10 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token])
 
   useEffect(() => {
-    if (isTeamRep && user?.teamId) {
+    if (!isTechnicalLead && user?.teamId) {
       setSelectedTeamId(user.teamId)
     }
-  }, [user, isTeamRep])
+  }, [user, isTechnicalLead])
 
   const login = async (credentials: { email: string; password: string }) => {
     const res = await api.login(credentials)
@@ -85,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(res.user)
     localStorage.setItem('token', res.token)
     localStorage.setItem('user', JSON.stringify(res.user))
-    if (res.user.role === 'team_rep' && res.user.teamId) {
+    if (res.user.role !== 'technical_lead' && res.user.teamId) {
       setSelectedTeamId(res.user.teamId)
     } else {
       setSelectedTeamId('all')
@@ -115,7 +123,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshUser,
         refreshTeams: loadTeams,
         isTechnicalLead,
-        isTeamRep
+        isCoach,
+        isStudent,
+        isTeamRep,
+        canApprovePurchases,
+        canManageFinances
       }}
     >
       {children}

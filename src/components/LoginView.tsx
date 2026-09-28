@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import {
   ShieldCheck,
   UserCheck,
+  GraduationCap,
   Lock,
   Mail,
   ArrowRight,
@@ -53,40 +54,49 @@ export const LoginView: React.FC = () => {
 
   const demoAccounts = [
     {
-      role: 'Responsável Técnica',
+      role: 'Responsável Técnica (Supervisão)',
       name: 'Profª Dra. Marina Guimarães',
-      desc: 'Acesso global: todas as equipes, aprovações de compras, balanços e auditoria.',
+      desc: 'Supervisão Geral: Acompanha tudo de todas as equipes, extratos, auditoria e status de compras.',
       email: 'responsavel@robotica.org',
       pass: 'admin123',
       color: 'cyan',
       icon: ShieldCheck
     },
     {
-      role: 'Representante Titanium 4022',
-      name: 'Gabriel Menezes (FRC)',
-      desc: 'Acesso restrito à equipe Titanium 4022: patrocínios, despesas e solicitações de compra.',
-      email: 'titanium@robotica.org',
-      pass: 'equipe123',
+      role: 'Técnico da Equipe (Titanium 4022)',
+      name: 'Prof. Lucas Rocha (Técnico)',
+      desc: 'Painel do Técnico: Analisa e aprova/rejeita compras solicitadas pelos alunos e gere receitas/despesas.',
+      email: 'tecnico@robotica.org',
+      pass: 'tecnico123',
       color: 'emerald',
       icon: UserCheck
     },
     {
-      role: 'Representante CyberGears 810',
-      name: 'Beatriz Vasconcelos (FTC)',
-      desc: 'Acesso restrito à equipe CyberGears 810: solicitação com ajustes pendentes.',
-      email: 'cybergears@robotica.org',
-      pass: 'equipe123',
+      role: 'Aluno da Equipe (Titanium 4022)',
+      name: 'Gabriel Menezes (Aluno)',
+      desc: 'Painel do Aluno: Cria solicitações de compras com orçamentos e especificações para aprovação do técnico.',
+      email: 'aluno@robotica.org',
+      pass: 'aluno123',
       color: 'indigo',
+      icon: GraduationCap
+    },
+    {
+      role: 'Técnica CyberGears 810',
+      name: 'Marina Duarte (Técnica)',
+      desc: 'Acesso à equipe CyberGears 810 para aprovações e gestão técnica.',
+      email: 'tecnico.cybergears@robotica.org',
+      pass: 'tecnico123',
+      color: 'amber',
       icon: UserCheck
     },
     {
-      role: 'Representante SparkBots 105',
-      name: 'Felipe Alencar (FLL)',
-      desc: 'Acesso restrito à equipe SparkBots 105: solicitação em análise.',
-      email: 'sparkbots@robotica.org',
-      pass: 'equipe123',
-      color: 'amber',
-      icon: UserCheck
+      role: 'Aluno CyberGears 810',
+      name: 'Beatriz Vasconcelos (Aluna)',
+      desc: 'Acesso para solicitação de compras da equipe CyberGears 810.',
+      email: 'aluno.cybergears@robotica.org',
+      pass: 'aluno123',
+      color: 'indigo',
+      icon: GraduationCap
     }
   ]
 
@@ -201,7 +211,7 @@ export const LoginView: React.FC = () => {
               gap: 8
             }}>
               <Info size={15} color="var(--primary)" />
-              <span>Senhas padrão: <code>admin123</code> (Técnica) / <code>equipe123</code> (Equipes).</span>
+              <span>Senhas padrão: <code>admin123</code> (Responsável Técnica) / <code>tecnico123</code> (Técnicos) / <code>aluno123</code> (Alunos).</span>
             </div>
           </div>
 
@@ -267,6 +277,23 @@ export const LoginView: React.FC = () => {
               textAlign: 'center'
             }}>
               Ambiente protegido com criptografia de ponta a ponta e controle estrito de permissões.
+            </div>
+
+            <div style={{ marginTop: 14, textAlign: 'center' }}>
+              <a
+                href="/admin"
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--text-dim)',
+                  textDecoration: 'none',
+                  opacity: 0.5,
+                  transition: 'opacity 0.15s'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
+              >
+                ⚙ Painel Administrativo
+              </a>
             </div>
           </div>
         </div>

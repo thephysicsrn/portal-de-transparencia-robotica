@@ -35,7 +35,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectPurchaseRequest,
   refreshTrigger
 }) => {
-  const { user, selectedTeamId, isTechnicalLead } = useAuth()
+  const { user, selectedTeamId, isTechnicalLead, isCoach, isStudent } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
 
   const [loading, setLoading] = useState(true)
@@ -107,28 +107,99 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div>
           <h1 className="page-title">
             <Layers size={28} color="var(--accent-cyan)" />
-            Painel Financeiro & Transparência
+            {isStudent
+              ? `Painel do Aluno - ${user?.team?.name || 'Equipe'}`
+              : isCoach
+              ? `Painel do Técnico - ${user?.team?.name || 'Equipe'}`
+              : isTechnicalLead
+              ? 'Painel de Supervisão e Transparência Geral (Responsável Técnica)'
+              : 'Painel Geral'}
           </h1>
           <p style={{ marginTop: 4 }}>
-            {isTechnicalLead
-              ? 'Supervisão técnica centralizada de patrocínios, despesas e solicitações de compra de todas as equipes.'
-              : `Acompanhamento em tempo real da saúde financeira e solicitações da equipe ${user?.team?.name || ''}.`}
+            {isStudent
+              ? 'Acompanhe a disponibilidade de recursos da equipe e faça solicitações de compras com acompanhamento da deliberação do técnico.'
+              : isCoach
+              ? 'Gestão financeira da equipe, aprovação de solicitações de compras enviadas pelos alunos e acompanhamento de compras.'
+              : 'Supervisão técnica centralizada e acompanhamento. As aprovações de compras são deliberadas pelos técnicos de cada equipe.'}
           </p>
         </div>
 
         {/* Action Shortcuts */}
         <div className="page-actions">
-          <button className="btn btn-outline" onClick={onOpenNewSponsorship}>
-            <PlusCircle size={16} /> Novo Patrocínio
-          </button>
-          <button className="btn btn-outline" onClick={onOpenNewExpense}>
-            <PlusCircle size={16} /> Lançar Despesa
-          </button>
+          {!isStudent && (
+            <>
+              <button className="btn btn-outline" onClick={onOpenNewSponsorship}>
+                <PlusCircle size={16} /> Novo Patrocínio
+              </button>
+              <button className="btn btn-outline" onClick={onOpenNewExpense}>
+                <PlusCircle size={16} /> Lançar Despesa
+              </button>
+            </>
+          )}
           <button className="btn btn-primary" onClick={onOpenNewPurchase}>
-            <ShoppingCart size={16} /> Nova Solicitação
+            <ShoppingCart size={16} /> {isStudent ? 'Nova Solicitação de Compra' : 'Nova Solicitação'}
           </button>
         </div>
       </div>
+
+      {/* Role-Specific Alert Banners */}
+      {isCoach && metrics.pendingRequestsCount > 0 && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.1)',
+          border: '1px solid var(--accent-amber)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 18px',
+          marginBottom: 22,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Clock size={22} color="var(--accent-amber)" />
+            <div>
+              <strong style={{ color: 'var(--accent-amber)', fontSize: '0.95rem' }}>
+                {metrics.pendingRequestsCount} solicitação(ões) de compras enviada(s) por alunos aguardando sua avaliação!
+              </strong>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Analise e aprove os orçamentos ou solicite ajustes para que os alunos possam adquirir os itens.
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => onNavigateTab('purchases')}>
+            Avaliar Agora <ArrowRight size={14} />
+          </button>
+        </div>
+      )}
+
+      {isStudent && (
+        <div style={{
+          background: 'rgba(99, 102, 241, 0.08)',
+          border: '1px solid var(--accent-indigo)',
+          borderRadius: 'var(--radius-md)',
+          padding: '14px 18px',
+          marginBottom: 22,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ShoppingCart size={22} color="var(--accent-indigo)" />
+            <div>
+              <strong style={{ color: 'var(--accent-indigo)', fontSize: '0.95rem' }}>
+                Área de Requisições do Aluno
+              </strong>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                Precisa de peças, componentes ou insumos? Abra uma solicitação detalhada para análise e aprovação do técnico da sua equipe.
+              </div>
+            </div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={onOpenNewPurchase}>
+            + Nova Solicitação
+          </button>
+        </div>
+      )}
 
       {/* Primary KPI Metrics */}
       <div className="grid-metrics">

@@ -41,6 +41,12 @@ interface AdminTeam {
   bankAccount: string
   leaderName: string
   createdAt: string
+  financialData?: {
+    sponsorshipsCount: number
+    expensesCount: number
+    purchaseRequestsCount: number
+    hasFinancialData: boolean
+  }
 }
 
 interface AdminUser {
@@ -66,6 +72,15 @@ function roleColor(role: AdminRole) {
   if (role === 'technical_lead') return '#06b6d4'
   if (role === 'team_coach') return '#10b981'
   return '#6366f1'
+}
+
+function financialDataSummary(fd: AdminTeam['financialData']): string {
+  if (!fd || !fd.hasFinancialData) return ''
+  const parts: string[] = []
+  if (fd.sponsorshipsCount > 0) parts.push(`${fd.sponsorshipsCount} patrocínio${fd.sponsorshipsCount !== 1 ? 's' : ''}`)
+  if (fd.expensesCount > 0) parts.push(`${fd.expensesCount} despesa${fd.expensesCount !== 1 ? 's' : ''}`)
+  if (fd.purchaseRequestsCount > 0) parts.push(`${fd.purchaseRequestsCount} solicitação${fd.purchaseRequestsCount !== 1 ? 'ões' : ''}`)
+  return parts.join(', ')
 }
 
 function RoleBadge({ role }: { role: AdminRole }) {
@@ -250,7 +265,7 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
     setLoading(true)
     try {
       const [teamsRes, usersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/teams`, { headers }),
+        fetch(`${API_BASE}/api/admin/teams`, { headers }),
         fetch(`${API_BASE}/api/admin/users`, { headers })
       ])
       if (!teamsRes.ok || !usersRes.ok) throw new Error('Falha ao carregar dados.')
@@ -310,7 +325,9 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
       {/* Confirm Dialog */}
       {confirmDelete && (
         <ConfirmDialog
-          message={`Tem certeza que deseja excluir ${confirmDelete.type === 'user' ? 'o usuário' : 'a equipe'} "${confirmDelete.name}"? Esta ação é irreversível.`}
+          message={confirmDelete.type === 'user'
+            ? `Tem certeza que deseja excluir o usuário "${confirmDelete.name}"? Esta ação é irreversível.`
+            : `Tem certeza que deseja excluir a equipe "${confirmDelete.name}"? Esta ação é irreversível.${users.some(u => u.teamId === confirmDelete.id) ? ' Os usuários vinculados ficarão sem equipe associada.' : ''}`}
           onConfirm={() => {
             if (confirmDelete.type === 'user') handleDeleteUser(confirmDelete.id)
             else handleDeleteTeam(confirmDelete.id)
@@ -329,10 +346,13 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
           onClose={() => setTeamModal(null)}
           onSuccess={(team) => {
             if (teamModal.mode === 'create') {
-              setTeams(prev => [...prev, team])
+              setTeams(prev => [...prev, {
+                ...team,
+                financialData: { sponsorshipsCount: 0, expensesCount: 0, purchaseRequestsCount: 0, hasFinancialData: false }
+              }])
               toast(`Equipe "${team.name}" criada com sucesso!`, 'success')
             } else {
-              setTeams(prev => prev.map(t => t.id === team.id ? team : t))
+              setTeams(prev => prev.map(t => t.id === team.id ? { ...t, ...team } : t))
               toast(`Equipe "${team.name}" atualizada!`, 'success')
             }
             setTeamModal(null)
@@ -594,6 +614,8 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
                     const teamUsers = users.filter(u => u.teamId === team.id)
                     const coaches = teamUsers.filter(u => u.role === 'team_coach')
                     const students = teamUsers.filter(u => u.role === 'student')
+                    const fd = team.financialData
+                    const hasData = fd?.hasFinancialData ?? false
                     return (
                       <div key={team.id} style={{
                         background: 'rgba(15,23,42,0.8)',
@@ -640,17 +662,38 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
                               <Pencil size={14} /> Editar
                             </button>
                             <button
-                              onClick={() => setConfirmDelete({ type: 'team', id: team.id, name: team.name })}
+                              onClick={() => hasData
+                                ? toast(`"${team.name}" não pode ser excluída: possui ${financialDataSummary(fd)} registrado(s). Exclua os dados financeiros antes.`, 'error')
+                                : setConfirmDelete({ type: 'team', id: team.id, name: team.name })}
+                              title={hasData ? `Bloqueado: ${financialDataSummary(fd)} registrado(s)` : 'Excluir equipe'}
                               style={{
-                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.15)',
-                                background: 'rgba(239,68,68,0.06)', color: '#f87171', cursor: 'pointer',
+                                padding: '7px 12px', borderRadius: 8,
+                                border: hasData ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(239,68,68,0.15)',
+                                background: hasData ? 'rgba(255,255,255,0.02)' : 'rgba(239,68,68,0.06)',
+                                color: hasData ? '#475569' : '#f87171', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 600
                               }}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={14} /> Apagar
                             </button>
                           </div>
                         </div>
+
+                        {hasData && (
+                          <div style={{
+                            marginTop: 12, padding: '10px 14px',
+                            background: 'rgba(245,158,11,0.07)',
+                            border: '1px solid rgba(245,158,11,0.2)',
+                            borderRadius: 8,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            fontSize: '0.775rem', color: '#fbbf24'
+                          }}>
+                            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                            <span>
+                              Exclusão bloqueada: há {financialDataSummary(fd)} registrado(s). Remova os dados financeiros para liberar a exclusão da equipe.
+                            </span>
+                          </div>
+                        )}
 
                         {/* Members preview */}
                         {teamUsers.length > 0 && (

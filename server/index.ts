@@ -1130,6 +1130,27 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
   return res.json({ token, user: safeUser })
 })
 
+// List all teams with financial data status (admin only)
+app.get('/api/admin/teams', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+  const teams = db.teams.map(t => {
+    const sponsorshipsCount = db.sponsorships.filter(s => s.teamId === t.id).length
+    const expensesCount = db.expenses.filter(e => e.teamId === t.id).length
+    const purchaseRequestsCount = db.purchaseRequests.filter(p => p.teamId === t.id).length
+    const hasFinancialData = sponsorshipsCount + expensesCount + purchaseRequestsCount > 0
+
+    return {
+      ...t,
+      financialData: {
+        sponsorshipsCount,
+        expensesCount,
+        purchaseRequestsCount,
+        hasFinancialData
+      }
+    }
+  })
+  return res.json(teams)
+})
+
 // List all users (admin only)
 app.get('/api/admin/users', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
   const safeUsers = db.users.map(u => {
@@ -1343,12 +1364,19 @@ app.delete('/api/admin/teams/:id', authenticateToken, requireRole(['technical_le
   const team = db.teams[idx]
 
   // Check if team has any financial data
-  const hasData = db.sponsorships.some(s => s.teamId === id)
-    || db.expenses.some(e => e.teamId === id)
-    || db.purchaseRequests.some(p => p.teamId === id)
+  const sponsorshipsCount = db.sponsorships.filter(s => s.teamId === id).length
+  const expensesCount = db.expenses.filter(e => e.teamId === id).length
+  const purchaseRequestsCount = db.purchaseRequests.filter(p => p.teamId === id).length
 
-  if (hasData) {
-    return res.status(400).json({ error: 'Não é possível excluir uma equipe com dados financeiros registrados. Exclua os dados primeiro.' })
+  if (sponsorshipsCount + expensesCount + purchaseRequestsCount > 0) {
+    const details: string[] = []
+    if (sponsorshipsCount > 0) details.push(`${sponsorshipsCount} patrocínio${sponsorshipsCount !== 1 ? 's' : ''}`)
+    if (expensesCount > 0) details.push(`${expensesCount} despesa${expensesCount !== 1 ? 's' : ''}`)
+    if (purchaseRequestsCount > 0) details.push(`${purchaseRequestsCount} solicitação${purchaseRequestsCount !== 1 ? 'ões' : ''}`)
+
+    return res.status(400).json({
+      error: `Não é possível excluir a equipe "${team.name}": há ${details.join(', ')} registrado(s). Exclua os dados financeiros antes.`
+    })
   }
 
   // Unlink users from this team

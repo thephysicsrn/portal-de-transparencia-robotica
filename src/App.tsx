@@ -12,7 +12,7 @@ import { AuditHistoryView } from './components/AuditHistoryView'
 import { TeamsManagementView } from './components/TeamsManagementView'
 import { AdminView } from './components/AdminView'
 import type { PurchaseRequest } from './types'
-import { Info } from 'lucide-react'
+import { Info, AlertTriangle } from 'lucide-react'
 import './App.css'
 
 // Check if we are on the /admin route
@@ -165,9 +165,70 @@ const AppMain: React.FC = () => {
   )
 }
 
+class AdminErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          minHeight: '100vh', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 14,
+          background: 'var(--bg-primary, #020617)', color: '#94a3b8',
+          fontFamily: "'Inter', -apple-system, sans-serif", padding: 24, textAlign: 'center'
+        }}>
+          <AlertTriangle size={36} color="#f59e0b" />
+          <h1 style={{ color: '#f1f5f9', fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
+            Não foi possível carregar o painel administrativo
+          </h1>
+          <p style={{ maxWidth: 460, fontSize: '0.85rem', margin: 0 }}>
+            {this.state.error.message}
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 20px', borderRadius: 8, border: 'none',
+                background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+                color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem'
+              }}
+            >
+              Recarregar
+            </button>
+            <a
+              href="/"
+              style={{
+                padding: '10px 20px', borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: '#94a3b8', fontWeight: 600, fontSize: '0.85rem',
+                textDecoration: 'none', display: 'flex', alignItems: 'center'
+              }}
+            >
+              Voltar ao Portal
+            </a>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 export default function App() {
   if (isAdminRoute) {
-    return <AdminView />
+    return (
+      <AdminErrorBoundary>
+        <AdminView />
+      </AdminErrorBoundary>
+    )
   }
 
   return (

@@ -226,6 +226,21 @@ class Database {
       }
     }
 
+    // Legacy databases still carry the retired "team_rep" role
+    for (const user of data.users) {
+      if (user.role === 'team_rep') {
+        user.role = 'team_coach'
+        changed = true
+      }
+    }
+
+    for (const log of data.auditLogs) {
+      if (log.userRole === 'team_rep') {
+        log.userRole = 'team_coach'
+        changed = true
+      }
+    }
+
     if (changed) this.saveData(data)
     return data
   }

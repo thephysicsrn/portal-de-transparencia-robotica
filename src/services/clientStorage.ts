@@ -31,6 +31,20 @@ function applySeedMigrations(state: ClientDbState): ClientDbState {
       state.users.push(seedUser)
     }
   }
+
+  // Legacy databases still carry the retired "team_rep" role
+  for (const user of state.users) {
+    if (user.role === 'team_rep') {
+      user.role = 'team_coach'
+    }
+  }
+
+  for (const log of state.auditLogs) {
+    if (log.userRole === 'team_rep') {
+      log.userRole = 'team_coach'
+    }
+  }
+
   return state
 }
 

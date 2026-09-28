@@ -111,6 +111,17 @@
       "title": "Aluno SparkBots 105",
       "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
       "createdAt": "2026-02-02T10:00:00.000Z"
+    },
+    {
+      "id": "user-system-admin",
+      "name": "Administrador de TI",
+      "email": "ti@robotica.org",
+      "passwordHash": "$2b$10$cdn2avLDWtlOxpzbGXwHhO2m12CT3wy.7VA0lPKxcAbJBNYQqJWCa",
+      "role": "system_admin",
+      "teamId": null,
+      "title": "Administrador do Sistema & TI",
+      "avatar": "",
+      "createdAt": "2026-01-01T07:00:00.000Z"
     }
   ],
   "sponsorships": [],

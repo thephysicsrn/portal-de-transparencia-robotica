@@ -28,7 +28,7 @@ import { adminApi } from '../services/adminApi'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AdminRole = 'system_admin' | 'technical_lead' | 'team_coach' | 'student'
+type AdminRole = 'system_admin' | 'technical_lead' | 'team_coach' | 'team_rep' | 'student'
 
 interface AdminTeam {
   id: string
@@ -64,14 +64,14 @@ interface AdminUser {
 function roleLabel(role: AdminRole) {
   if (role === 'system_admin') return 'Administrador de TI'
   if (role === 'technical_lead') return 'Responsável Técnica'
-  if (role === 'team_coach') return 'Técnico da Equipe'
+  if (role === 'team_coach' || role === 'team_rep') return 'Técnico da Equipe'
   return 'Aluno'
 }
 
 function roleColor(role: AdminRole) {
   if (role === 'system_admin') return '#a78bfa'
   if (role === 'technical_lead') return '#06b6d4'
-  if (role === 'team_coach') return '#10b981'
+  if (role === 'team_coach' || role === 'team_rep') return '#10b981'
   return '#6366f1'
 }
 
@@ -89,9 +89,10 @@ function RoleBadge({ role }: { role: AdminRole }) {
     system_admin: { bg: 'rgba(167,139,250,0.12)', text: '#a78bfa', icon: <ShieldCheck size={12} /> },
     technical_lead: { bg: 'rgba(6,182,212,0.12)', text: '#06b6d4', icon: <Crown size={12} /> },
     team_coach: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
+    team_rep: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
     student: { bg: 'rgba(99,102,241,0.12)', text: '#818cf8', icon: <GraduationCap size={12} /> },
   }
-  const c = colors[role]
+  const c = colors[role] || colors.student
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -298,7 +299,7 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
 
   // ── Derived stats ──
   const totalUsers = users.length
-  const totalTechnicians = users.filter(u => u.role === 'team_coach').length
+  const totalTechnicians = users.filter(u => u.role === 'team_coach' || u.role === 'team_rep').length
   const totalStudents = users.filter(u => u.role === 'student').length
   const totalSystemAdmins = users.filter(u => u.role === 'system_admin').length
   const unlinkedUsers = users.filter(u => u.role !== 'system_admin' && u.role !== 'technical_lead' && !u.teamId).length
@@ -503,7 +504,7 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {teams.map(team => {
                     const teamUsers = users.filter(u => u.teamId === team.id)
-                    const coaches = teamUsers.filter(u => u.role === 'team_coach')
+                    const coaches = teamUsers.filter(u => u.role === 'team_coach' || u.role === 'team_rep')
                     const students = teamUsers.filter(u => u.role === 'student')
                     return (
                       <div key={team.id} style={{
@@ -608,7 +609,7 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {filteredTeams.map(team => {
                     const teamUsers = users.filter(u => u.teamId === team.id)
-                    const coaches = teamUsers.filter(u => u.role === 'team_coach')
+                    const coaches = teamUsers.filter(u => u.role === 'team_coach' || u.role === 'team_rep')
                     const students = teamUsers.filter(u => u.role === 'student')
                     const fd = team.financialData
                     const hasData = fd?.hasFinancialData ?? false

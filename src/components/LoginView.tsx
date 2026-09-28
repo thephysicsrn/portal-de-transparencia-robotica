@@ -1,14 +1,5 @@
 import React, { useState } from 'react'
-import {
-  ShieldCheck,
-  UserCheck,
-  GraduationCap,
-  Lock,
-  Mail,
-  ArrowRight,
-  Sparkles,
-  Info
-} from 'lucide-react'
+import { Lock, Mail } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 
@@ -37,68 +28,6 @@ export const LoginView: React.FC = () => {
       setSubmitting(false)
     }
   }
-
-  const handleQuickLogin = async (quickEmail: string, quickPass: string, roleName: string) => {
-    try {
-      setSubmitting(true)
-      setEmail(quickEmail)
-      setPassword(quickPass)
-      await login({ email: quickEmail, password: quickPass })
-      showToast(`Bem-vindo(a) como ${roleName}!`, 'success')
-    } catch (err: any) {
-      showToast(err.message || 'Falha ao autenticar.', 'error')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const demoAccounts = [
-    {
-      role: 'Responsável Técnica (Supervisão)',
-      name: 'Profª Dra. Marina Guimarães',
-      desc: 'Supervisão Geral: Acompanha tudo de todas as equipes, extratos, auditoria e status de compras.',
-      email: 'responsavel@robotica.org',
-      pass: 'admin123',
-      color: 'cyan',
-      icon: ShieldCheck
-    },
-    {
-      role: 'Técnico da Equipe (Titanium 4022)',
-      name: 'Prof. Lucas Rocha (Técnico)',
-      desc: 'Painel do Técnico: Analisa e aprova/rejeita compras solicitadas pelos alunos e gere receitas/despesas.',
-      email: 'tecnico@robotica.org',
-      pass: 'tecnico123',
-      color: 'emerald',
-      icon: UserCheck
-    },
-    {
-      role: 'Aluno da Equipe (Titanium 4022)',
-      name: 'Gabriel Menezes (Aluno)',
-      desc: 'Painel do Aluno: Cria solicitações de compras com orçamentos e especificações para aprovação do técnico.',
-      email: 'aluno@robotica.org',
-      pass: 'aluno123',
-      color: 'indigo',
-      icon: GraduationCap
-    },
-    {
-      role: 'Técnica CyberGears 810',
-      name: 'Marina Duarte (Técnica)',
-      desc: 'Acesso à equipe CyberGears 810 para aprovações e gestão técnica.',
-      email: 'tecnico.cybergears@robotica.org',
-      pass: 'tecnico123',
-      color: 'amber',
-      icon: UserCheck
-    },
-    {
-      role: 'Aluno CyberGears 810',
-      name: 'Beatriz Vasconcelos (Aluna)',
-      desc: 'Acesso para solicitação de compras da equipe CyberGears 810.',
-      email: 'aluno.cybergears@robotica.org',
-      pass: 'aluno123',
-      color: 'indigo',
-      icon: GraduationCap
-    }
-  ]
 
   return (
     <div style={{
@@ -143,79 +72,8 @@ export const LoginView: React.FC = () => {
           </p>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 28,
-          alignItems: 'start'
-        }}>
-          {/* Left: Quick Access for Testing & Demonstration */}
-          <div className="card" style={{ borderColor: 'var(--border-subtle)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <Sparkles size={20} color="var(--primary)" />
-              <h2 style={{ fontSize: '1.15rem', color: 'var(--text-main)' }}>Acesso Rápido de Demonstração</h2>
-            </div>
-            <p style={{ fontSize: '0.8125rem', marginBottom: 20, color: 'var(--text-muted)' }}>
-              Clique em um dos perfis pré-configurados para explorar o sistema com permissões reais:
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {demoAccounts.map(acc => {
-                const Icon = acc.icon
-                return (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    className="btn btn-secondary"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      height: 'auto',
-                      borderRadius: 'var(--radius-md)'
-                    }}
-                    onClick={() => handleQuickLogin(acc.email, acc.pass, acc.role)}
-                    disabled={submitting}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div className={`stat-icon-wrapper ${acc.color}`} style={{ width: 34, height: 34 }}>
-                        <Icon size={18} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '0.875rem' }}>
-                          {acc.name}
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {acc.role}
-                        </div>
-                      </div>
-                    </div>
-                    <ArrowRight size={16} color="var(--primary)" />
-                  </button>
-                )
-              })}
-            </div>
-
-            <div style={{
-              marginTop: 18,
-              padding: 12,
-              background: 'var(--bg-tertiary)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              fontSize: '0.75rem',
-              color: 'var(--text-muted)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}>
-              <Info size={15} color="var(--primary)" />
-              <span>Senhas padrão: <code>admin123</code> (Responsável Técnica) / <code>tecnico123</code> (Técnicos) / <code>aluno123</code> (Alunos).</span>
-            </div>
-          </div>
-
-          {/* Right: Manual Login Form */}
+        <div style={{ maxWidth: 460, margin: '0 auto' }}>
+          {/* Manual Login Form */}
           <div className="card">
             <h2 style={{ fontSize: '1.25rem', color: 'var(--text-main)', marginBottom: 8 }}>
               Entrar com E-mail e Senha

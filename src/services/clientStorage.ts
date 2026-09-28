@@ -141,18 +141,19 @@ export const clientStorage = {
 
     const user = db.users.find(u => u.email.toLowerCase() === email)
     if (!user) {
-      throw new Error('E-mail não encontrado. Utilize uma das contas de demonstração (ex: responsavel@robotica.org) ou clique nos botões de Acesso Rápido.')
+      throw new Error('E-mail não encontrado. Verifique o endereço informado ou solicite o acesso ao administrador do portal.')
     }
 
     // Check credentials (accept standard demo passwords or any >= 3 chars during presentation)
     const valid =
       pass.length >= 3 ||
       pass === 'admin123' ||
-      pass === 'equipe123' ||
+      pass === 'tecnico123' ||
+      pass === 'aluno123' ||
       pass === '123456'
 
     if (!valid) {
-      throw new Error('Senha incorreta. A senha padrão é admin123 ou equipe123.')
+      throw new Error('Senha incorreta.')
     }
 
     const team = user.teamId ? db.teams.find(t => t.id === user.teamId) || null : null

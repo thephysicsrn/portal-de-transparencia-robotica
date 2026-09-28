@@ -26,6 +26,13 @@ interface ClientDbState {
 
 // Adds seed records that are missing, so previously stored databases pick up new default users
 function applySeedMigrations(state: ClientDbState): ClientDbState {
+  if (!Array.isArray(state.users)) state.users = []
+  if (!Array.isArray(state.teams)) state.teams = []
+  if (!Array.isArray(state.sponsorships)) state.sponsorships = []
+  if (!Array.isArray(state.expenses)) state.expenses = []
+  if (!Array.isArray(state.purchaseRequests)) state.purchaseRequests = []
+  if (!Array.isArray(state.auditLogs)) state.auditLogs = []
+
   for (const seedUser of INITIAL_MOCK_DATA.users) {
     if (!state.users.some(u => u.id === seedUser.id)) {
       state.users.push(seedUser)
@@ -53,7 +60,7 @@ function loadState(): ClientDbState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.users && parsed.teams && parsed.sponsorships) {
+      if (parsed && parsed.users && parsed.teams && parsed.sponsorships) {
         return applySeedMigrations(parsed)
       }
     }

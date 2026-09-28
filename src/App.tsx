@@ -15,8 +15,9 @@ import type { PurchaseRequest } from './types'
 import { Info, AlertTriangle } from 'lucide-react'
 import './App.css'
 
-// Check if we are on the /admin route
-const isAdminRoute = window.location.pathname === '/admin'
+// Check if we are on the /admin route (tolerates trailing slashes and casing)
+const normalizedPath = window.location.pathname.replace(/\/+$/, '').toLowerCase()
+const isAdminRoute = normalizedPath === '/admin' || normalizedPath.startsWith('/admin/')
 
 
 const AppMain: React.FC = () => {

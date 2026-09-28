@@ -260,9 +260,11 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
   const [teamModal, setTeamModal] = useState<{ mode: 'create' | 'edit'; data?: AdminTeam } | null>(null)
   const [userModal, setUserModal] = useState<{ mode: 'create' | 'edit'; data?: AdminUser } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'team'; id: string; name: string } | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const [teamsData, usersData] = await Promise.all([
         adminApi.getTeams(),
@@ -271,6 +273,7 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
       setTeams(teamsData)
       setUsers(usersData)
     } catch (err: any) {
+      setLoadError(err.message || 'Erro ao carregar dados.')
       toast(err.message || 'Erro ao carregar dados.', 'error')
     } finally {
       setLoading(false)
@@ -462,6 +465,17 @@ function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
             <RefreshCw size={14} /> Atualizar
           </button>
         </div>
+
+        {loadError && (
+          <div style={{
+            marginBottom: 20, padding: '14px 18px', borderRadius: 10,
+            background: 'rgba(239,68,68,0.08)',
+            border: '1px solid rgba(239,68,68,0.25)',
+            color: '#fca5a5', fontSize: '0.85rem', fontWeight: 600
+          }}>
+            Falha ao carregar os dados do painel: {loadError}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: 60, color: '#64748b' }}>Carregando dados...</div>

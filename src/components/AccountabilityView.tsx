@@ -35,12 +35,12 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
   initialTeamFilter,
   refreshTrigger
 }) => {
-  const { user, selectedTeamId, isTechnicalLead } = useAuth()
+  const { user, selectedTeamId, hasGlobalAccess } = useAuth()
   const { showToast } = useToast()
 
   const [statement, setStatement] = useState<StatementResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [teamFilter, setTeamFilter] = useState(initialTeamFilter || (isTechnicalLead && selectedTeamId ? selectedTeamId : 'all'))
+  const [teamFilter, setTeamFilter] = useState(initialTeamFilter || (hasGlobalAccess && selectedTeamId ? selectedTeamId : 'all'))
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -49,10 +49,10 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
   useEffect(() => {
     if (initialTeamFilter) {
       setTeamFilter(initialTeamFilter)
-    } else if (isTechnicalLead && selectedTeamId) {
+    } else if (hasGlobalAccess && selectedTeamId) {
       setTeamFilter(selectedTeamId)
     }
-  }, [initialTeamFilter, selectedTeamId, isTechnicalLead])
+  }, [initialTeamFilter, selectedTeamId, hasGlobalAccess])
 
   const [selectedReceipt, setSelectedReceipt] = useState<{
     isOpen: boolean
@@ -68,7 +68,7 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
     try {
       setLoading(true)
       const data = await api.getStatement({
-        teamId: isTechnicalLead ? teamFilter : user?.teamId || undefined,
+        teamId: hasGlobalAccess ? teamFilter : user?.teamId || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         category: categoryFilter !== 'all' ? categoryFilter : undefined
@@ -142,7 +142,7 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
       </div>
 
       {/* Seletor Visual de Extrato por Equipe (Responsável Técnica) */}
-      {isTechnicalLead && (
+      {hasGlobalAccess && (
         <div className="team-filter-bar">
           <div className="team-filter-title">
             <Users size={16} />
@@ -194,7 +194,7 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
                 )}
               </div>
             </div>
-            {isTechnicalLead && (
+            {hasGlobalAccess && (
               <div className="team-banner-actions">
                 <button
                   type="button"
@@ -256,7 +256,7 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
 
       {/* Filter Toolbar */}
       <div className="filter-bar">
-        {isTechnicalLead && (
+        {hasGlobalAccess && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: 600 }}>Equipe:</span>
             <select
@@ -317,14 +317,14 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
           </select>
         </div>
 
-        {(startDate || endDate || categoryFilter !== 'all' || (isTechnicalLead && teamFilter !== 'all')) && (
+        {(startDate || endDate || categoryFilter !== 'all' || (hasGlobalAccess && teamFilter !== 'all')) && (
           <button
             className="btn btn-outline btn-sm"
             onClick={() => {
               setStartDate('')
               setEndDate('')
               setCategoryFilter('all')
-              if (isTechnicalLead) setTeamFilter('all')
+              if (hasGlobalAccess) setTeamFilter('all')
             }}
           >
             Limpar Filtros
@@ -395,15 +395,15 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
                           background: '#f0f9ff',
                           color: 'var(--primary)',
                           border: '1px solid #bae6fd',
-                          cursor: isTechnicalLead ? 'pointer' : 'default',
+                          cursor: hasGlobalAccess ? 'pointer' : 'default',
                           fontSize: '0.725rem'
                         }}
                         onClick={() => {
-                          if (isTechnicalLead && item.teamId) {
+                          if (hasGlobalAccess && item.teamId) {
                             setTeamFilter(item.teamId)
                           }
                         }}
-                        title={isTechnicalLead ? 'Clique para filtrar o extrato apenas desta equipe' : undefined}
+                        title={hasGlobalAccess ? 'Clique para filtrar o extrato apenas desta equipe' : undefined}
                       >
                         {item.teamName}
                       </button>

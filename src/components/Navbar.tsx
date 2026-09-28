@@ -26,7 +26,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDataRefreshNeeded }) => {
-  const { user, logout, selectedTeamId, setSelectedTeamId, teams, isTechnicalLead, isCoach, isStudent } = useAuth()
+  const { user, logout, selectedTeamId, setSelectedTeamId, teams, hasGlobalAccess, isCoach, isStudent } = useAuth()
   const { showToast } = useToast()
 
   const handleResetDemo = async () => {
@@ -55,7 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
     { id: 'sponsorships', label: isStudent ? 'Patrocínios (Transparência)' : 'Patrocínios', icon: HandCoins },
     ...(isStudent ? [] : [{ id: 'expenses', label: 'Despesas', icon: Receipt }]),
     ...(isStudent ? [] : [{ id: 'audit', label: 'Histórico & Auditoria', icon: History }]),
-    ...(isTechnicalLead ? [{ id: 'teams', label: 'Equipes', icon: Users }] : [])
+    ...(hasGlobalAccess ? [{ id: 'teams', label: 'Equipes', icon: Users }] : [])
   ]
 
   return (
@@ -80,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
           {/* Right Controls */}
           <div className="navbar-controls">
             {/* Team Scope Selector for Technical Lead */}
-            {isTechnicalLead ? (
+            {hasGlobalAccess ? (
               <div className="team-filter-pill">
                 <Building size={15} color="var(--primary)" />
                 <span className="team-filter-label">Equipe:</span>
@@ -117,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
               <div className="user-info">
                 <span className="user-name">{user?.name}</span>
                 <span className="user-role-tag">
-                  {isTechnicalLead ? (
+                  {hasGlobalAccess ? (
                     <span style={{ color: 'var(--accent-cyan)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                       <ShieldCheck size={12} /> Responsável Técnica (Supervisão Geral)
                     </span>
@@ -135,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
             </div>
 
             {/* Quick Demo Reset for Admin */}
-            {isTechnicalLead && (
+            {hasGlobalAccess && (
               <button
                 className="btn btn-secondary btn-icon btn-sm"
                 title="Restaurar dados de teste demonstrativos"

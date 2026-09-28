@@ -34,7 +34,7 @@ export const SponsorshipsView: React.FC<SponsorshipsViewProps> = ({
   refreshTrigger,
   onDataChanged
 }) => {
-  const { user, selectedTeamId, isTechnicalLead } = useAuth()
+  const { user, selectedTeamId, hasGlobalAccess } = useAuth()
   const { showToast } = useToast()
 
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([])
@@ -327,7 +327,7 @@ export const SponsorshipsView: React.FC<SponsorshipsViewProps> = ({
               </div>
 
               <div className="modal-body">
-                {isTechnicalLead && (
+                {hasGlobalAccess && (
                   <div className="form-group">
                     <label className="form-label">
                       Equipe Beneficiada <span className="required">*</span>

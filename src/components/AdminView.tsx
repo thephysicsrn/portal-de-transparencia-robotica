@@ -29,7 +29,7 @@ const API_BASE = 'http://localhost:3001'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AdminRole = 'technical_lead' | 'team_coach' | 'student'
+type AdminRole = 'system_admin' | 'technical_lead' | 'team_coach' | 'student'
 
 interface AdminTeam {
   id: string
@@ -63,12 +63,14 @@ interface AdminUser {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function roleLabel(role: AdminRole) {
+  if (role === 'system_admin') return 'Administrador de TI'
   if (role === 'technical_lead') return 'Responsável Técnica'
   if (role === 'team_coach') return 'Técnico da Equipe'
   return 'Aluno'
 }
 
 function roleColor(role: AdminRole) {
+  if (role === 'system_admin') return '#a78bfa'
   if (role === 'technical_lead') return '#06b6d4'
   if (role === 'team_coach') return '#10b981'
   return '#6366f1'
@@ -85,6 +87,7 @@ function financialDataSummary(fd: AdminTeam['financialData']): string {
 
 function RoleBadge({ role }: { role: AdminRole }) {
   const colors: Record<AdminRole, { bg: string; text: string; icon: React.ReactNode }> = {
+    system_admin: { bg: 'rgba(167,139,250,0.12)', text: '#a78bfa', icon: <ShieldCheck size={12} /> },
     technical_lead: { bg: 'rgba(6,182,212,0.12)', text: '#06b6d4', icon: <Crown size={12} /> },
     team_coach: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
     student: { bg: 'rgba(99,102,241,0.12)', text: '#818cf8', icon: <GraduationCap size={12} /> },
@@ -304,7 +307,8 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
   const totalUsers = users.length
   const totalTechnicians = users.filter(u => u.role === 'team_coach').length
   const totalStudents = users.filter(u => u.role === 'student').length
-  const unlinkedUsers = users.filter(u => u.role !== 'technical_lead' && !u.teamId).length
+  const totalSystemAdmins = users.filter(u => u.role === 'system_admin').length
+  const unlinkedUsers = users.filter(u => u.role !== 'system_admin' && u.role !== 'technical_lead' && !u.teamId).length
 
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
@@ -409,7 +413,7 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}>{adminUser.name}</div>
-              <div style={{ color: '#06b6d4', fontSize: '0.72rem', fontWeight: 600 }}>Responsável Técnica</div>
+              <div style={{ color: roleColor(adminUser.role), fontSize: '0.72rem', fontWeight: 600 }}>{roleLabel(adminUser.role)}</div>
             </div>
             <button
               onClick={onLogout}
@@ -484,6 +488,7 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
                     { label: 'Técnicos', value: totalTechnicians, color: '#10b981', icon: <UserCheck size={22} /> },
                     { label: 'Alunos', value: totalStudents, color: '#818cf8', icon: <GraduationCap size={22} /> },
                     { label: 'Sem Equipe', value: unlinkedUsers, color: '#f59e0b', icon: <Link2 size={22} /> },
+                    { label: 'Admins de TI', value: totalSystemAdmins, color: '#a78bfa', icon: <ShieldCheck size={22} /> },
                   ].map(s => (
                     <div key={s.label} style={{
                       background: 'rgba(15,23,42,0.8)',
@@ -792,7 +797,7 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
                               <span style={{ color: '#06b6d4', fontSize: '0.8rem', fontWeight: 600 }}>{u.team.name}</span>
                             ) : (
                               <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>
-                                {u.role === 'technical_lead' ? '—' : 'Sem equipe'}
+                                {(u.role === 'technical_lead' || u.role === 'system_admin') ? '—' : 'Sem equipe'}
                               </span>
                             )}
                           </td>
@@ -1021,7 +1026,8 @@ function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: 
           </div>
         </Field>
         <Field label="Papel / Função" required>
-          <select style={{ ...inputStyle }} value={form.role} onChange={e => { set('role', e.target.value); if (e.target.value === 'technical_lead') set('teamId', '') }} required>
+          <select style={{ ...inputStyle }} value={form.role} onChange={e => { set('role', e.target.value); if (e.target.value === 'system_admin' || e.target.value === 'technical_lead') set('teamId', '') }} required>
+            <option value="system_admin">Administrador de TI (Acesso Total)</option>
             <option value="technical_lead">Responsável Técnica (Supervisão Geral)</option>
             <option value="team_coach">Técnico da Equipe (Aprovação de Compras)</option>
             <option value="student">Aluno (Solicitação de Compras)</option>
@@ -1113,7 +1119,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
             Painel Administrativo
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-            Acesso restrito à Responsável Técnica
+            Acesso restrito à Responsável Técnica e ao Administrador de TI
           </p>
         </div>
 
@@ -1126,7 +1132,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
         }}>
           <form onSubmit={handleLogin}>
-            <Field label="E-mail da Responsável Técnica" required>
+            <Field label="E-mail institucional" required>
               <input
                 type="email"
                 style={inputStyle}

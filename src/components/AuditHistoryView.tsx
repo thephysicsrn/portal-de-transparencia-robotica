@@ -168,7 +168,11 @@ export const AuditHistoryView: React.FC<AuditHistoryViewProps> = ({ refreshTrigg
                       </span>
                     </td>
                     <td>
-                      {log.userRole === 'technical_lead' ? (
+                      {log.userRole === 'system_admin' ? (
+                        <span style={{ color: '#a78bfa', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <ShieldCheck size={12} /> TI
+                        </span>
+                      ) : log.userRole === 'technical_lead' ? (
                         <span style={{ color: 'var(--accent-cyan)', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                           <ShieldCheck size={12} /> Técnica
                         </span>

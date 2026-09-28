@@ -36,7 +36,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   refreshTrigger,
   onDataChanged
 }) => {
-  const { user, selectedTeamId, isTechnicalLead } = useAuth()
+  const { user, selectedTeamId, hasGlobalAccess } = useAuth()
   const { showToast } = useToast()
 
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -375,7 +375,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
               </div>
 
               <div className="modal-body">
-                {isTechnicalLead && (
+                {hasGlobalAccess && (
                   <div className="form-group">
                     <label className="form-label">
                       Equipe Correspondente <span className="required">*</span>

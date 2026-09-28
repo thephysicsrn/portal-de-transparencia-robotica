@@ -46,7 +46,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
   refreshTrigger,
   onDataChanged
 }) => {
-  const { user, selectedTeamId, isTechnicalLead, isCoach, isStudent } = useAuth()
+  const { user, selectedTeamId, hasGlobalAccess, isCoach, isStudent } = useAuth()
   const { showToast } = useToast()
 
   const [requests, setRequests] = useState<PurchaseRequest[]>([])
@@ -595,7 +595,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
               </div>
 
               <div className="modal-body">
-                {isTechnicalLead && (
+                {hasGlobalAccess && (
                   <div className="form-group">
                     <label className="form-label">
                       Equipe Solicitante <span className="required">*</span>

@@ -12,6 +12,17 @@ export interface ClientDatabase {
 export const INITIAL_MOCK_DATA: ClientDatabase = {
   users: [
     {
+      id: "user-system-admin",
+      name: "Administrador de TI",
+      email: "ti@robotica.org",
+      passwordHash: "$2b$10$.PINbwShVtmqNMQJd3qH8.1UPB9.oa4/Sf49UiHmdFmwVXgCdAEXm", // ti123
+      role: "system_admin",
+      teamId: null,
+      title: "Administrador do Sistema & TI",
+      avatar: "",
+      createdAt: "2026-01-01T07:00:00.000Z"
+    },
+    {
       id: "user-tech-lead",
       name: "Profª Dra. Marina Guimarães",
       email: "responsavel@robotica.org",

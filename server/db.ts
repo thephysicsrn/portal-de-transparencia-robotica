@@ -23,6 +23,7 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 function getDefaultDatabase(): DatabaseSchema {
   const salt = bcrypt.genSaltSync(10)
   const adminPassword = bcrypt.hashSync('admin123', salt)
+  const tiPassword = bcrypt.hashSync('ti123', salt)
   const coachPassword = bcrypt.hashSync('tecnico123', salt)
   const studentPassword = bcrypt.hashSync('aluno123', salt)
 
@@ -63,6 +64,17 @@ function getDefaultDatabase(): DatabaseSchema {
   ]
 
   const users: User[] = [
+    {
+      id: 'user-system-admin',
+      name: 'Administrador de TI',
+      email: 'ti@robotica.org',
+      passwordHash: tiPassword,
+      role: 'system_admin',
+      teamId: null,
+      title: 'Administrador do Sistema & TI',
+      avatar: '',
+      createdAt: '2026-01-01T07:00:00.000Z'
+    },
     {
       id: 'user-tech-lead',
       name: 'Profª Dra. Marina Guimarães',
@@ -187,7 +199,8 @@ class Database {
     try {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8')
-        return JSON.parse(raw)
+        const parsed = JSON.parse(raw) as DatabaseSchema
+        return this.applySeedMigrations(parsed)
       }
     } catch (e) {
       console.error('Erro ao ler banco de dados. Recriando padrão.', e)
@@ -196,6 +209,25 @@ class Database {
     const defaultDb = getDefaultDatabase()
     this.saveData(defaultDb)
     return defaultDb
+  }
+
+  // Inserts default accounts that are missing, so existing databases pick up newly added roles
+  private applySeedMigrations(data: DatabaseSchema): DatabaseSchema {
+    let changed = false
+
+    for (const seedUser of getDefaultDatabase().users) {
+      const existing = data.users.find(u => u.id === seedUser.id || u.email.toLowerCase() === seedUser.email.toLowerCase())
+      if (!existing) {
+        data.users.push(seedUser)
+        changed = true
+      } else if (existing.role !== seedUser.role) {
+        existing.role = seedUser.role
+        changed = true
+      }
+    }
+
+    if (changed) this.saveData(data)
+    return data
   }
 
   private saveData(data: DatabaseSchema) {

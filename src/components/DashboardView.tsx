@@ -35,7 +35,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectPurchaseRequest,
   refreshTrigger
 }) => {
-  const { user, selectedTeamId, isTechnicalLead, isCoach, isStudent } = useAuth()
+  const { user, selectedTeamId, isSystemAdmin, isTechnicalLead, isCoach, isStudent } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
 
   const [loading, setLoading] = useState(true)
@@ -111,6 +111,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ? `Painel do Aluno - ${user?.team?.name || 'Equipe'}`
               : isCoach
               ? `Painel do Técnico - ${user?.team?.name || 'Equipe'}`
+              : isSystemAdmin
+              ? 'Painel do Administrador de TI'
               : isTechnicalLead
               ? 'Painel de Supervisão e Transparência Geral (Responsável Técnica)'
               : 'Painel Geral'}
@@ -120,6 +122,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ? 'Acompanhe a disponibilidade de recursos da equipe e faça solicitações de compras com acompanhamento da deliberação do técnico.'
               : isCoach
               ? 'Gestão financeira da equipe, aprovação de solicitações de compras enviadas pelos alunos e acompanhamento de compras.'
+              : isSystemAdmin
+              ? 'Administração completa do sistema: equipes, usuários, auditoria e todos os registros financeiros.'
               : 'Supervisão técnica centralizada e acompanhamento. As aprovações de compras são deliberadas pelos técnicos de cada equipe.'}
           </p>
         </div>

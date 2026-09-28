@@ -14,12 +14,14 @@ interface AuthContextType {
   logout: () => void
   refreshUser: () => Promise<void>
   refreshTeams: () => Promise<void>
+  isSystemAdmin: boolean
   isTechnicalLead: boolean
   isCoach: boolean
   isStudent: boolean
   isTeamRep: boolean
   canApprovePurchases: boolean
   canManageFinances: boolean
+  hasGlobalAccess: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -34,12 +36,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
 
+  const isSystemAdmin = user?.role === 'system_admin'
   const isTechnicalLead = user?.role === 'technical_lead'
   const isCoach = user?.role === 'team_coach' || user?.role === 'team_rep'
   const isStudent = user?.role === 'student'
   const isTeamRep = isCoach
   const canApprovePurchases = isCoach
-  const canManageFinances = isTechnicalLead || isCoach
+  const hasGlobalAccess = isSystemAdmin || isTechnicalLead
+  const canManageFinances = hasGlobalAccess || isCoach
 
   const loadTeams = async () => {
     try {
@@ -82,10 +86,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token])
 
   useEffect(() => {
-    if (!isTechnicalLead && user?.teamId) {
+    if (!hasGlobalAccess && user?.teamId) {
       setSelectedTeamId(user.teamId)
     }
-  }, [user, isTechnicalLead])
+  }, [user, hasGlobalAccess])
 
   const login = async (credentials: { email: string; password: string }) => {
     const res = await api.login(credentials)
@@ -93,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(res.user)
     localStorage.setItem('token', res.token)
     localStorage.setItem('user', JSON.stringify(res.user))
-    if (res.user.role !== 'technical_lead' && res.user.teamId) {
+    if (res.user.role !== 'system_admin' && res.user.role !== 'technical_lead' && res.user.teamId) {
       setSelectedTeamId(res.user.teamId)
     } else {
       setSelectedTeamId('all')
@@ -122,12 +126,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         refreshUser,
         refreshTeams: loadTeams,
+        isSystemAdmin,
         isTechnicalLead,
         isCoach,
         isStudent,
         isTeamRep,
         canApprovePurchases,
-        canManageFinances
+        canManageFinances,
+        hasGlobalAccess
       }}
     >
       {children}

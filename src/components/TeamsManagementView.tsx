@@ -24,7 +24,7 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
   onTeamCreated,
   onNavigateTab
 }) => {
-  const { isTechnicalLead } = useAuth()
+  const { hasGlobalAccess } = useAuth()
   const { showToast } = useToast()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -82,7 +82,7 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
           </p>
         </div>
 
-        {isTechnicalLead && (
+        {hasGlobalAccess && (
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
             <PlusCircle size={16} /> Cadastrar Nova Equipe
           </button>

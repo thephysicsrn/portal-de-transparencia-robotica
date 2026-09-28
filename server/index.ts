@@ -82,7 +82,7 @@ function authenticateToken(req: AuthRequest, res: Response, next: NextFunction):
 }
 
 // Role Middleware
-function requireRole(allowedRoles: Array<'technical_lead' | 'team_coach' | 'student' | 'team_rep'>) {
+function requireRole(allowedRoles: Array<'system_admin' | 'technical_lead' | 'team_coach' | 'student' | 'team_rep'>) {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
       res.status(403).json({ error: 'Acesso negado: permissão insuficiente para esta operação.' })
@@ -92,15 +92,20 @@ function requireRole(allowedRoles: Array<'technical_lead' | 'team_coach' | 'stud
   }
 }
 
-// Enforce Team Scope Middleware (Restricts non-technical_lead users to their own team)
+// Users with global access can reach every team (system administration and technical supervision)
+function hasGlobalAccess(role: string): boolean {
+  return role === 'system_admin' || role === 'technical_lead'
+}
+
+// Enforce Team Scope Middleware (Restricts users without global access to their own team)
 function enforceTeamScope(req: AuthRequest, res: Response, next: NextFunction): void {
   if (!req.user) {
     res.status(401).json({ error: 'Não autenticado.' })
     return
   }
 
-  // Technical lead can access any team (supervision and oversight)
-  if (req.user.role === 'technical_lead') {
+  // System admin and technical lead can access any team
+  if (hasGlobalAccess(req.user.role)) {
     next()
     return
   }
@@ -158,7 +163,7 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     action: 'LOGIN',
     entityType: 'auth',
     entityId: user.id,
-    description: `Usuário realizou login no sistema (${user.role === 'technical_lead' ? 'Responsável Técnica' : user.role === 'team_coach' ? 'Técnico da Equipe' : user.role === 'student' ? 'Aluno' : 'Representante'}).`
+    description: `Usuário realizou login no sistema (${user.role === 'system_admin' ? 'Administrador de TI' : user.role === 'technical_lead' ? 'Responsável Técnica' : user.role === 'team_coach' ? 'Técnico da Equipe' : user.role === 'student' ? 'Aluno' : 'Representante'}).`
   })
 
   const { passwordHash: _, ...safeUser } = user
@@ -189,7 +194,7 @@ app.get('/api/auth/me', authenticateToken, (req: AuthRequest, res: Response) => 
 // ----------------------------------------------------
 
 app.get('/api/teams', authenticateToken, (req: AuthRequest, res: Response) => {
-  if (req.user?.role !== 'technical_lead') {
+  if (!hasGlobalAccess(req.user?.role!)) {
     const team = db.teams.filter(t => t.id === req.user!.teamId)
     return res.json(team)
   }
@@ -198,7 +203,7 @@ app.get('/api/teams', authenticateToken, (req: AuthRequest, res: Response) => {
 
 app.get('/api/teams/:id', authenticateToken, (req: AuthRequest, res: Response) => {
   const { id } = req.params
-  if (req.user?.role !== 'technical_lead' && req.user.teamId !== id) {
+  if (!hasGlobalAccess(req.user?.role!) && req.user.teamId !== id) {
     return res.status(403).json({ error: 'Acesso negado aos dados de outra equipe.' })
   }
 
@@ -209,7 +214,7 @@ app.get('/api/teams/:id', authenticateToken, (req: AuthRequest, res: Response) =
   return res.json({ ...team, summary })
 })
 
-app.post('/api/teams', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.post('/api/teams', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { name, code, category, institution, description, bankAccount, leaderName } = req.body
 
   if (!name || !code || !category) {
@@ -270,12 +275,12 @@ app.post('/api/upload', authenticateToken, upload.single('file'), (req: AuthRequ
 // ----------------------------------------------------
 
 app.get('/api/reports/dashboard', authenticateToken, (req: AuthRequest, res: Response) => {
-  const isTechLead = req.user?.role === 'technical_lead'
+  const canSeeAllTeams = hasGlobalAccess(req.user?.role!)
   const filterTeamId = req.query.teamId as string
 
   let teamsSummaries = db.getAllTeamsFinancialSummary()
 
-  if (!isTechLead) {
+  if (!canSeeAllTeams) {
     teamsSummaries = teamsSummaries.filter(s => s.teamId === req.user!.teamId)
   } else if (filterTeamId && filterTeamId !== 'all') {
     teamsSummaries = teamsSummaries.filter(s => s.teamId === filterTeamId)
@@ -293,7 +298,7 @@ app.get('/api/reports/dashboard', authenticateToken, (req: AuthRequest, res: Res
   let pendingRequests = db.purchaseRequests.filter(p => 
     p.status === 'enviada' || p.status === 'em_analise' || p.status === 'ajuste_solicitado'
   )
-  if (!isTechLead) {
+  if (!canSeeAllTeams) {
     pendingRequests = pendingRequests.filter(p => p.teamId === req.user!.teamId)
   } else if (filterTeamId && filterTeamId !== 'all') {
     pendingRequests = pendingRequests.filter(p => p.teamId === filterTeamId)
@@ -301,7 +306,7 @@ app.get('/api/reports/dashboard', authenticateToken, (req: AuthRequest, res: Res
 
   // Recent activity logs
   let recentLogs = db.auditLogs
-  if (!isTechLead) {
+  if (!canSeeAllTeams) {
     recentLogs = recentLogs.filter(l => l.teamId === req.user!.teamId)
   } else if (filterTeamId && filterTeamId !== 'all') {
     recentLogs = recentLogs.filter(l => l.teamId === filterTeamId)
@@ -337,7 +342,7 @@ app.get('/api/reports/statement', authenticateToken, enforceTeamScope, (req: Aut
     category?: string
   }
 
-  const targetTeamId = req.user?.role !== 'technical_lead' ? req.user.teamId! : (teamId || 'all')
+  const targetTeamId = hasGlobalAccess(req.user?.role!) ? (teamId || 'all') : req.user.teamId!
 
   let sponsorships = db.sponsorships
   let expenses = db.expenses
@@ -454,7 +459,7 @@ app.get('/api/sponsorships', authenticateToken, enforceTeamScope, (req: AuthRequ
   const teamId = req.query.teamId as string
   let items = db.sponsorships
 
-  if (req.user?.role !== 'technical_lead') {
+  if (!hasGlobalAccess(req.user?.role!)) {
     items = items.filter(s => s.teamId === req.user!.teamId)
   } else if (teamId && teamId !== 'all') {
     items = items.filter(s => s.teamId === teamId)
@@ -478,7 +483,7 @@ app.post('/api/sponsorships', authenticateToken, enforceTeamScope, (req: AuthReq
   }
   const { sponsorName, amount, receiptDate, purpose, notes, receiptUrl, receiptFileName, teamId } = req.body
 
-  const assignedTeamId = req.user?.role !== 'technical_lead' ? req.user.teamId! : (teamId || req.user.teamId!)
+  const assignedTeamId = hasGlobalAccess(req.user?.role!) ? (teamId || req.user.teamId!) : req.user.teamId!
 
   if (!assignedTeamId) {
     return res.status(400).json({ error: 'A equipe beneficiada deve ser informada.' })
@@ -544,7 +549,7 @@ app.delete('/api/sponsorships/:id', authenticateToken, enforceTeamScope, (req: A
 
   const sponsorship = db.sponsorships[index]
 
-  if (req.user?.role !== 'technical_lead' && sponsorship.teamId !== req.user.teamId) {
+  if (!hasGlobalAccess(req.user?.role!) && sponsorship.teamId !== req.user.teamId) {
     return res.status(403).json({ error: 'Acesso negado: você não pode excluir registros de outra equipe.' })
   }
 
@@ -577,7 +582,7 @@ app.get('/api/expenses', authenticateToken, enforceTeamScope, (req: AuthRequest,
   const teamId = req.query.teamId as string
   let items = db.expenses
 
-  if (req.user?.role !== 'technical_lead') {
+  if (!hasGlobalAccess(req.user?.role!)) {
     items = items.filter(e => e.teamId === req.user!.teamId)
   } else if (teamId && teamId !== 'all') {
     items = items.filter(e => e.teamId === teamId)
@@ -599,7 +604,7 @@ app.post('/api/expenses', authenticateToken, enforceTeamScope, (req: AuthRequest
   }
   const { category, description, amount, expenseDate, supplier, receiptUrl, receiptFileName, purchaseRequestId, teamId } = req.body
 
-  const assignedTeamId = req.user?.role !== 'technical_lead' ? req.user.teamId! : (teamId || req.user.teamId!)
+  const assignedTeamId = hasGlobalAccess(req.user?.role!) ? (teamId || req.user.teamId!) : req.user.teamId!
 
   if (!assignedTeamId) {
     return res.status(400).json({ error: 'A equipe deve ser informada.' })
@@ -666,7 +671,7 @@ app.delete('/api/expenses/:id', authenticateToken, enforceTeamScope, (req: AuthR
 
   const expense = db.expenses[index]
 
-  if (req.user?.role !== 'technical_lead' && expense.teamId !== req.user.teamId) {
+  if (!hasGlobalAccess(req.user?.role!) && expense.teamId !== req.user.teamId) {
     return res.status(403).json({ error: 'Acesso negado: você não pode excluir despesas de outra equipe.' })
   }
 
@@ -699,7 +704,7 @@ app.get('/api/purchase-requests', authenticateToken, enforceTeamScope, (req: Aut
   const { teamId, status } = req.query as { teamId?: string; status?: string }
   let items = db.purchaseRequests
 
-  if (req.user?.role !== 'technical_lead') {
+  if (!hasGlobalAccess(req.user?.role!)) {
     items = items.filter(p => p.teamId === req.user!.teamId)
   } else if (teamId && teamId !== 'all') {
     items = items.filter(p => p.teamId === teamId)
@@ -727,7 +732,7 @@ app.get('/api/purchase-requests/:id', authenticateToken, (req: AuthRequest, res:
     return res.status(404).json({ error: 'Solicitação de compra não encontrada.' })
   }
 
-  if (req.user?.role !== 'technical_lead' && request.teamId !== req.user.teamId) {
+  if (!hasGlobalAccess(req.user?.role!) && request.teamId !== req.user.teamId) {
     return res.status(403).json({ error: 'Acesso negado: solicitação de outra equipe.' })
   }
 
@@ -739,7 +744,7 @@ app.get('/api/purchase-requests/:id', authenticateToken, (req: AuthRequest, res:
 app.post('/api/purchase-requests', authenticateToken, enforceTeamScope, (req: AuthRequest, res: Response) => {
   const { title, items, purpose, justification, urgency, teamId } = req.body
 
-  const assignedTeamId = req.user?.role !== 'technical_lead' ? req.user.teamId! : (teamId || req.user.teamId!)
+  const assignedTeamId = hasGlobalAccess(req.user?.role!) ? (teamId || req.user.teamId!) : req.user.teamId!
 
   if (!assignedTeamId) {
     return res.status(400).json({ error: 'A equipe solicitante deve ser informada.' })
@@ -828,7 +833,7 @@ app.put('/api/purchase-requests/:id', authenticateToken, enforceTeamScope, (req:
     return res.status(404).json({ error: 'Solicitação de compra não encontrada.' })
   }
 
-  if (req.user?.role !== 'technical_lead' && request.teamId !== req.user.teamId) {
+  if (!hasGlobalAccess(req.user?.role!) && request.teamId !== req.user.teamId) {
     return res.status(403).json({ error: 'Acesso negado: solicitação de outra equipe.' })
   }
 
@@ -987,7 +992,7 @@ app.post('/api/purchase-requests/:id/complete', authenticateToken, enforceTeamSc
     return res.status(404).json({ error: 'Solicitação de compra não encontrada.' })
   }
 
-  if (req.user?.role !== 'technical_lead' && request.teamId !== req.user.teamId) {
+  if (!hasGlobalAccess(req.user?.role!) && request.teamId !== req.user.teamId) {
     return res.status(403).json({ error: 'Acesso negado: solicitação de outra equipe.' })
   }
 
@@ -1069,7 +1074,7 @@ app.get('/api/audit-logs', authenticateToken, enforceTeamScope, (req: AuthReques
   const teamId = req.query.teamId as string
   let logs = db.auditLogs
 
-  if (req.user?.role !== 'technical_lead') {
+  if (!hasGlobalAccess(req.user?.role!)) {
     logs = logs.filter(l => l.teamId === req.user!.teamId)
   } else if (teamId && teamId !== 'all') {
     logs = logs.filter(l => l.teamId === teamId)
@@ -1082,7 +1087,7 @@ app.get('/api/audit-logs', authenticateToken, enforceTeamScope, (req: AuthReques
 // ADMIN UTILITIES (Reset demo data)
 // ----------------------------------------------------
 
-app.post('/api/admin/reset-demo', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.post('/api/admin/reset-demo', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   db.resetDemoData()
 
   db.logAudit({
@@ -1121,7 +1126,7 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Credenciais inválidas.' })
   }
 
-  if (user.role !== 'technical_lead') {
+  if (!hasGlobalAccess(user.role)) {
     return res.status(403).json({ error: 'Acesso restrito ao painel administrativo.' })
   }
 
@@ -1131,7 +1136,7 @@ app.post('/api/admin/login', (req: Request, res: Response) => {
 })
 
 // List all teams with financial data status (admin only)
-app.get('/api/admin/teams', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.get('/api/admin/teams', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const teams = db.teams.map(t => {
     const sponsorshipsCount = db.sponsorships.filter(s => s.teamId === t.id).length
     const expensesCount = db.expenses.filter(e => e.teamId === t.id).length
@@ -1152,7 +1157,7 @@ app.get('/api/admin/teams', authenticateToken, requireRole(['technical_lead']), 
 })
 
 // List all users (admin only)
-app.get('/api/admin/users', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.get('/api/admin/users', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const safeUsers = db.users.map(u => {
     const { passwordHash: _, ...safe } = u
     const team = u.teamId ? db.teams.find(t => t.id === u.teamId) : null
@@ -1162,14 +1167,14 @@ app.get('/api/admin/users', authenticateToken, requireRole(['technical_lead']), 
 })
 
 // Create user (admin only)
-app.post('/api/admin/users', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.post('/api/admin/users', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { name, email, password, role, teamId, title } = req.body
 
   if (!name || !email || !password || !role) {
     return res.status(400).json({ error: 'Nome, e-mail, senha e papel são obrigatórios.' })
   }
 
-  const validRoles = ['technical_lead', 'team_coach', 'student']
+  const validRoles = ['system_admin', 'technical_lead', 'team_coach', 'student']
   if (!validRoles.includes(role)) {
     return res.status(400).json({ error: 'Papel inválido.' })
   }
@@ -1225,7 +1230,7 @@ app.post('/api/admin/users', authenticateToken, requireRole(['technical_lead']),
 })
 
 // Update user (admin only)
-app.put('/api/admin/users/:id', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.put('/api/admin/users/:id', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { id } = req.params
   const { name, email, password, role, teamId, title } = req.body
 
@@ -1254,7 +1259,7 @@ app.put('/api/admin/users/:id', authenticateToken, requireRole(['technical_lead'
     name: name ? name.trim() : user.name,
     email: email ? email.toLowerCase().trim() : user.email,
     role: role || user.role,
-    teamId: role === 'technical_lead' ? null : (teamId !== undefined ? (teamId || null) : user.teamId),
+    teamId: role === 'system_admin' || role === 'technical_lead' ? null : (teamId !== undefined ? (teamId || null) : user.teamId),
     title: title !== undefined ? title : user.title,
     ...(password ? { passwordHash: bcrypt.hashSync(password, 10) } : {})
   }
@@ -1281,7 +1286,7 @@ app.put('/api/admin/users/:id', authenticateToken, requireRole(['technical_lead'
 })
 
 // Delete user (admin only)
-app.delete('/api/admin/users/:id', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.delete('/api/admin/users/:id', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { id } = req.params
 
   if (id === req.user!.id) {
@@ -1313,7 +1318,7 @@ app.delete('/api/admin/users/:id', authenticateToken, requireRole(['technical_le
 })
 
 // Update team (admin only)
-app.put('/api/admin/teams/:id', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.put('/api/admin/teams/:id', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { id } = req.params
   const { name, code, category, institution, description, bankAccount, leaderName } = req.body
 
@@ -1353,7 +1358,7 @@ app.put('/api/admin/teams/:id', authenticateToken, requireRole(['technical_lead'
 })
 
 // Delete team (admin only)
-app.delete('/api/admin/teams/:id', authenticateToken, requireRole(['technical_lead']), (req: AuthRequest, res: Response) => {
+app.delete('/api/admin/teams/:id', authenticateToken, requireRole(['system_admin', 'technical_lead']), (req: AuthRequest, res: Response) => {
   const { id } = req.params
 
   const idx = db.teams.findIndex(t => t.id === id)

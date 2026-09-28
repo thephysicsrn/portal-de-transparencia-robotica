@@ -24,8 +24,7 @@ import {
   XCircle,
   LayoutDashboard
 } from 'lucide-react'
-
-const API_BASE = 'http://localhost:3001'
+import { adminApi } from '../services/adminApi'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -242,12 +241,11 @@ const inputStyle: React.CSSProperties = {
 // ── Main Admin Panel ───────────────────────────────────────────────────────────
 
 interface AdminPanelProps {
-  token: string
   adminUser: AdminUser
   onLogout: () => void
 }
 
-function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
+function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
   const { toasts, show: toast } = useAdminToast()
   const [tab, setTab] = useState<'teams' | 'users' | 'overview'>('overview')
 
@@ -262,32 +260,28 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
   const [userModal, setUserModal] = useState<{ mode: 'create' | 'edit'; data?: AdminUser } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'team'; id: string; name: string } | null>(null)
 
-  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [teamsRes, usersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/admin/teams`, { headers }),
-        fetch(`${API_BASE}/api/admin/users`, { headers })
+      const [teamsData, usersData] = await Promise.all([
+        adminApi.getTeams(),
+        adminApi.getUsers()
       ])
-      if (!teamsRes.ok || !usersRes.ok) throw new Error('Falha ao carregar dados.')
-      setTeams(await teamsRes.json())
-      setUsers(await usersRes.json())
+      setTeams(teamsData)
+      setUsers(usersData)
     } catch (err: any) {
       toast(err.message || 'Erro ao carregar dados.', 'error')
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [toast])
 
   useEffect(() => { loadData() }, [loadData])
 
   // ── Delete Handlers ──
   const handleDeleteUser = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/users/${id}`, { method: 'DELETE', headers })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      await adminApi.deleteUser(id)
       toast('Usuário excluído com sucesso.', 'success')
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch (err: any) { toast(err.message, 'error') }
@@ -295,8 +289,7 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
 
   const handleDeleteTeam = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/teams/${id}`, { method: 'DELETE', headers })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      await adminApi.deleteTeam(id)
       toast('Equipe excluída com sucesso.', 'success')
       setTeams(prev => prev.filter(t => t.id !== id))
       setUsers(prev => prev.map(u => u.teamId === id ? { ...u, teamId: null, team: null } : u))
@@ -346,7 +339,6 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
         <TeamFormModal
           mode={teamModal.mode}
           data={teamModal.data}
-          token={token}
           onClose={() => setTeamModal(null)}
           onSuccess={(team) => {
             if (teamModal.mode === 'create') {
@@ -371,7 +363,6 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
           mode={userModal.mode}
           data={userModal.data}
           teams={teams}
-          token={token}
           onClose={() => setUserModal(null)}
           onSuccess={(user) => {
             if (userModal.mode === 'create') {
@@ -848,10 +839,9 @@ function AdminPanel({ token, adminUser, onLogout }: AdminPanelProps) {
 
 // ── Team Form Modal ────────────────────────────────────────────────────────────
 
-function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
+function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminTeam
-  token: string
   onClose: () => void
   onSuccess: (team: AdminTeam) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -877,14 +867,10 @@ function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
     }
     setSaving(true)
     try {
-      const url = mode === 'create' ? `${API_BASE}/api/teams` : `${API_BASE}/api/admin/teams/${data!.id}`
-      const method = mode === 'create' ? 'POST' : 'PUT'
-      const res = await fetch(url, {
-        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      onSuccess(await res.json())
+      const saved = mode === 'create'
+        ? await adminApi.createTeam(form)
+        : await adminApi.updateTeam(data!.id, form)
+      onSuccess(saved)
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
@@ -950,11 +936,10 @@ function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
 
 // ── User Form Modal ────────────────────────────────────────────────────────────
 
-function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: {
+function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminUser
   teams: AdminTeam[]
-  token: string
   onClose: () => void
   onSuccess: (user: AdminUser) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -985,14 +970,10 @@ function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: 
     if (form.password) body.password = form.password
 
     try {
-      const url = mode === 'create' ? `${API_BASE}/api/admin/users` : `${API_BASE}/api/admin/users/${data!.id}`
-      const method = mode === 'create' ? 'POST' : 'PUT'
-      const res = await fetch(url, {
-        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      onSuccess(await res.json())
+      const saved = mode === 'create'
+        ? await adminApi.createUser(body)
+        : await adminApi.updateUser(data!.id, body)
+      onSuccess(saved)
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
@@ -1080,16 +1061,10 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
     setError('')
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Falha ao autenticar.')
+      const data = await adminApi.login(email, password)
       onSuccess(data.token, data.user)
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Falha ao autenticar.')
     } finally {
       setLoading(false)
     }
@@ -1237,5 +1212,5 @@ export function AdminView() {
     return <AdminLogin onSuccess={handleLoginSuccess} />
   }
 
-  return <AdminPanel token={token} adminUser={adminUser} onLogout={handleLogout} />
+  return <AdminPanel adminUser={adminUser} onLogout={handleLogout} />
 }

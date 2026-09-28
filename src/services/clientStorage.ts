@@ -68,6 +68,15 @@ function getSessionUser(): User | null {
   }
 }
 
+function getAdminSessionUser(): User | null {
+  try {
+    const raw = sessionStorage.getItem('admin_user')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 function logAudit(
   db: ClientDbState,
   action: string,
@@ -184,6 +193,219 @@ export const clientStorage = {
     const freshUser = db.users.find(u => u.id === user.id) || user
     const team = freshUser.teamId ? db.teams.find(t => t.id === freshUser.teamId) || null : null
     return { user: { ...freshUser, team } }
+  },
+
+  // Admin panel
+  adminLogin: async (email: string, password: string) => {
+    const db = loadState()
+    const normalizedEmail = email.trim().toLowerCase()
+    const pass = password.trim()
+
+    const user = db.users.find(u => u.email.toLowerCase() === normalizedEmail)
+    if (!user || !(pass.length >= 3 || pass === '123456')) {
+      throw new Error('Credenciais inválidas.')
+    }
+
+    if (user.role !== 'system_admin' && user.role !== 'technical_lead') {
+      throw new Error('Acesso restrito ao painel administrativo.')
+    }
+
+    const token = `local-admin-token-${user.id}-${Date.now()}`
+    return { token, user: { ...user } }
+  },
+
+  adminGetTeams: async () => {
+    const db = loadState()
+    return db.teams.map(t => {
+      const sponsorshipsCount = db.sponsorships.filter(s => s.teamId === t.id).length
+      const expensesCount = db.expenses.filter(e => e.teamId === t.id).length
+      const purchaseRequestsCount = db.purchaseRequests.filter(p => p.teamId === t.id).length
+      return {
+        ...t,
+        financialData: {
+          sponsorshipsCount,
+          expensesCount,
+          purchaseRequestsCount,
+          hasFinancialData: sponsorshipsCount + expensesCount + purchaseRequestsCount > 0
+        }
+      }
+    })
+  },
+
+  adminGetUsers: async () => {
+    const db = loadState()
+    return db.users.map(u => {
+      const { passwordHash: _passwordHash, ...safe } = u
+      const team = u.teamId ? db.teams.find(t => t.id === u.teamId) || null : null
+      return { ...safe, team }
+    })
+  },
+
+  adminCreateUser: async (payload: any) => {
+    const db = loadState()
+    const { name, email, password, role, teamId, title } = payload
+
+    if (!name || !email || !password || !role) {
+      throw new Error('Nome, e-mail, senha e papel são obrigatórios.')
+    }
+
+    const validRoles = ['system_admin', 'technical_lead', 'team_coach', 'student']
+    if (!validRoles.includes(role)) {
+      throw new Error('Papel inválido.')
+    }
+
+    if ((role === 'team_coach' || role === 'student') && !teamId) {
+      throw new Error('Técnico e Aluno devem estar associados a uma equipe.')
+    }
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (db.users.some(u => u.email.toLowerCase() === normalizedEmail)) {
+      throw new Error('Este e-mail já está cadastrado.')
+    }
+
+    if (teamId && !db.teams.some(t => t.id === teamId)) {
+      throw new Error('Equipe não encontrada.')
+    }
+
+    const isGlobalRole = role === 'system_admin' || role === 'technical_lead'
+    const newUser = {
+      id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash: password,
+      role,
+      teamId: isGlobalRole ? null : (teamId || null),
+      title: title || '',
+      avatar: '',
+      createdAt: new Date().toISOString()
+    }
+
+    db.users.push(newUser)
+    logAudit(db, 'LOGIN', 'auth', newUser.id, `Administrador cadastrou novo usuário: ${newUser.name} (${role}) - ${newUser.email}.`)
+    saveState(db)
+
+    const { passwordHash: _passwordHash, ...safe } = newUser
+    const team = newUser.teamId ? db.teams.find(t => t.id === newUser.teamId) || null : null
+    return { ...safe, team }
+  },
+
+  adminUpdateUser: async (id: string, payload: any) => {
+    const db = loadState()
+    const idx = db.users.findIndex(u => u.id === id)
+    if (idx === -1) throw new Error('Usuário não encontrado.')
+
+    const { name, email, password, role, teamId, title } = payload
+    const current = db.users[idx]
+
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (db.users.some(u => u.email.toLowerCase() === normalizedEmail && u.id !== id)) {
+        throw new Error('Este e-mail já está em uso por outro usuário.')
+      }
+    }
+
+    if (teamId && !db.teams.some(t => t.id === teamId)) {
+      throw new Error('Equipe não encontrada.')
+    }
+
+    const updated = {
+      ...current,
+      name: name ? name.trim() : current.name,
+      email: email ? email.trim().toLowerCase() : current.email,
+      role: role || current.role,
+      teamId: (role === 'system_admin' || role === 'technical_lead')
+        ? null
+        : (teamId !== undefined ? (teamId || null) : current.teamId),
+      title: title !== undefined ? title : current.title,
+      ...(password ? { passwordHash: password } : {})
+    }
+
+    db.users[idx] = updated
+    logAudit(db, 'LOGIN', 'auth', updated.id, `Administrador editou usuário: ${updated.name} (${updated.role}).`)
+    saveState(db)
+
+    const { passwordHash: _passwordHash, ...safe } = updated
+    const team = updated.teamId ? db.teams.find(t => t.id === updated.teamId) || null : null
+    return { ...safe, team }
+  },
+
+  adminDeleteUser: async (id: string) => {
+    const db = loadState()
+    const session = getAdminSessionUser()
+    if (session && session.id === id) {
+      throw new Error('Você não pode excluir sua própria conta de administrador.')
+    }
+
+    const idx = db.users.findIndex(u => u.id === id)
+    if (idx === -1) throw new Error('Usuário não encontrado.')
+
+    const user = db.users[idx]
+
+    if (db.users.filter(u => u.role === 'system_admin' || u.role === 'technical_lead').length <= 1) {
+      throw new Error('Não é possível excluir o último administrador do sistema.')
+    }
+
+    db.users.splice(idx, 1)
+    logAudit(db, 'LOGIN', 'auth', id, `Administrador excluiu usuário: ${user.name} (${user.email}).`)
+    saveState(db)
+
+    return { message: 'Usuário excluído com sucesso.' }
+  },
+
+  adminUpdateTeam: async (id: string, payload: any) => {
+    const db = loadState()
+    const idx = db.teams.findIndex(t => t.id === id)
+    if (idx === -1) throw new Error('Equipe não encontrada.')
+
+    const { name, code, category, institution, description, bankAccount, leaderName } = payload
+    const current = db.teams[idx]
+
+    const updated: Team = {
+      ...current,
+      name: name || current.name,
+      code: code ? code.toUpperCase() : current.code,
+      category: category || current.category,
+      institution: institution !== undefined ? institution : current.institution,
+      description: description !== undefined ? description : current.description,
+      bankAccount: bankAccount !== undefined ? bankAccount : current.bankAccount,
+      leaderName: leaderName !== undefined ? leaderName : current.leaderName
+    }
+
+    db.teams[idx] = updated
+    logAudit(db, 'CRIOU_PATROCINIO', 'team', id, `Administrador editou dados da equipe: ${updated.name}.`, id, updated.name)
+    saveState(db)
+
+    return updated
+  },
+
+  adminDeleteTeam: async (id: string) => {
+    const db = loadState()
+    const idx = db.teams.findIndex(t => t.id === id)
+    if (idx === -1) throw new Error('Equipe não encontrada.')
+
+    const team = db.teams[idx]
+    const sponsorshipsCount = db.sponsorships.filter(s => s.teamId === id).length
+    const expensesCount = db.expenses.filter(e => e.teamId === id).length
+    const purchaseRequestsCount = db.purchaseRequests.filter(p => p.teamId === id).length
+
+    if (sponsorshipsCount + expensesCount + purchaseRequestsCount > 0) {
+      const details: string[] = []
+      if (sponsorshipsCount > 0) details.push(`${sponsorshipsCount} patrocínio${sponsorshipsCount !== 1 ? 's' : ''}`)
+      if (expensesCount > 0) details.push(`${expensesCount} despesa${expensesCount !== 1 ? 's' : ''}`)
+      if (purchaseRequestsCount > 0) details.push(`${purchaseRequestsCount} solicitação${purchaseRequestsCount !== 1 ? 'ões' : ''}`)
+
+      throw new Error(`Não é possível excluir a equipe "${team.name}": há ${details.join(', ')} registrado(s). Exclua os dados financeiros antes.`)
+    }
+
+    db.users.forEach(u => {
+      if (u.teamId === id) u.teamId = null
+    })
+
+    db.teams.splice(idx, 1)
+    logAudit(db, 'CRIOU_PATROCINIO', 'team', id, `Administrador excluiu equipe: ${team.name}.`)
+    saveState(db)
+
+    return { message: 'Equipe excluída com sucesso.' }
   },
 
   // Teams

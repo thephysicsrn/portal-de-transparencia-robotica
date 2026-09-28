@@ -164,6 +164,10 @@ export const adminApi = {
       () => request<any>(`/admin/teams/${id}`, { method: 'DELETE' }),
       () => clientStorage.adminDeleteTeam(id)
     )
+  },
+
+  clearLocalData: () => {
+    clientStorage.clearLocalData()
   }
 }
 

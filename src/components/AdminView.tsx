@@ -1194,6 +1194,22 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           <a href="/" style={{ color: '#475569', fontSize: '0.8rem', textDecoration: 'none' }}>
             ← Voltar para o Portal
           </a>
+          <div style={{ marginTop: 14 }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!window.confirm('Isso apaga os dados salvos neste navegador (equipes, usuários e lançamentos) e recarrega a página. O servidor não é afetado. Continuar?')) return
+                adminApi.clearLocalData()
+                window.location.reload()
+              }}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                color: '#64748b', fontSize: '0.75rem', textDecoration: 'underline'
+              }}
+            >
+              Painel não carrega? Limpar dados deste navegador
+            </button>
+          </div>
         </div>
       </div>
     </div>

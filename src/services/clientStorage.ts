@@ -55,21 +55,26 @@ function applySeedMigrations(state: ClientDbState): ClientDbState {
   return state
 }
 
+function seedState(): ClientDbState {
+  const initial = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA))
+  saveState(initial)
+  return initial
+}
+
 function loadState(): ClientDbState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed && parsed.users && parsed.teams && parsed.sponsorships) {
+      if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.teams) && Array.isArray(parsed.sponsorships)) {
         return applySeedMigrations(parsed)
       }
+      console.warn('Stored client database has an unexpected shape, reinitializing with seed data')
     }
   } catch (err) {
-    console.warn('Failed to parse client storage db, reinitializing with seed data', err)
+    console.warn('Failed to load client storage db, reinitializing with seed data', err)
   }
-  const initial = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA))
-  saveState(initial)
-  return initial
+  return seedState()
 }
 
 function saveState(state: ClientDbState) {
@@ -171,6 +176,24 @@ export const clientStorage = {
     const initial = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA))
     saveState(initial)
     return { message: 'Dados de demonstração restaurados com sucesso!' }
+  },
+
+  // Recovery: wipes everything this browser stored, so the next load starts from seed data
+  clearLocalData: () => {
+    const prefixes = ['portal_robotica', 'user', 'token', 'admin_token', 'admin_user']
+    try {
+      const doomed: string[] = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && prefixes.some(p => key.startsWith(p))) doomed.push(key)
+      }
+      doomed.forEach(k => localStorage.removeItem(k))
+      for (const key of ['user', 'token', 'admin_token', 'admin_user']) {
+        sessionStorage.removeItem(key)
+      }
+    } catch (err) {
+      console.error('Failed to clear local data', err)
+    }
   },
 
   // Auth

@@ -822,13 +822,15 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                               {u.id !== adminUser.id && (
                                 <button
                                   onClick={() => setConfirmDelete({ type: 'user', id: u.id, name: u.name })}
+                                  title="Apagar usuário"
+                                  aria-label={`Apagar usuário ${u.name}`}
                                   style={{
                                     padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.15)',
                                     background: 'rgba(239,68,68,0.06)', color: '#f87171', cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.775rem', fontWeight: 600
                                   }}
                                 >
-                                  <Trash2 size={12} />
+                                  <Trash2 size={12} /> Apagar
                                 </button>
                               )}
                             </div>

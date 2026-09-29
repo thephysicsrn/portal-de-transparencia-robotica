@@ -20,6 +20,7 @@ await send(ws, 'Page.enable'); await send(ws, 'Runtime.enable')
 await send(ws, 'Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
 await send(ws, 'Page.navigate', { url: BASE + '/' }); await sleep(7000)
 
+const waitForm = async () => { for (let i=0;i<25;i++){ const ok = await ev(`document.querySelectorAll('input').length>=2 && !!document.querySelector('form button[type=submit]')`); if (ok) return true; await sleep(1000) } return false }
 const login = async (email, pass) => ev(`
   (() => { const i=document.querySelectorAll('input'); if(i.length<2) return 'sem formulario';
     const set=(el,v)=>{const d=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value');d.set.call(el,v);el.dispatchEvent(new Event('input',{bubbles:true}))};
@@ -28,16 +29,19 @@ const login = async (email, pass) => ev(`
 const click = n => ev(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===${JSON.stringify(n)}); if(b){b.click();return 'clicado'} return 'NAO EXISTE' })()`)
 const btns = () => ev(`JSON.stringify([...document.querySelectorAll('button')].map(b=>b.textContent.trim()).filter(Boolean))`)
 
-console.log('login:', await login('responsavel@robotica.org', 'admin123')); await sleep(5000)
+console.log('form pronto:', await waitForm())
+console.log('login:', await login('responsavel@robotica.org', 'admin123'))
+for (let i=0;i<25;i++){ const ok = await ev(`[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='Equipes')`); if (ok) break; await sleep(1000) }
+await sleep(2000)
 console.log('\n== menu ==')
 console.log(await ev(`JSON.stringify([...document.querySelectorAll('.navbar button, .navbar a, nav button, nav a')].map(b=>b.textContent.trim()).filter(Boolean))`))
 
 console.log('\n== aba Equipes ==')
-console.log('click:', await click('Equipes')); await sleep(3000)
+console.log('click:', await click('Equipes')); await sleep(3500)
 console.log('botoes:', await btns())
 
 console.log('\n== aba Usuarios ==')
-console.log('click:', await click('Usuários')); await sleep(3500)
+console.log('click:', await click('Usuários')); await sleep(4000)
 console.log('botoes:', await btns())
 console.log('texto:', await ev(`document.body.innerText.replace(/\\n{2,}/g,'\\n').slice(0,300)`))
 

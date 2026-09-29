@@ -5,10 +5,13 @@ import {
   Building,
   CreditCard,
   ShieldCheck,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Pencil,
+  Trash2,
+  UserCog
 } from 'lucide-react'
 import type { Team } from '../types'
-import { api } from '../services/api'
+import { adminApi } from '../services/adminApi'
 
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
@@ -28,6 +31,8 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
   const { showToast } = useToast()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<Team | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -39,6 +44,36 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
   })
   const [submitting, setSubmitting] = useState(false)
 
+  const emptyForm = {
+    name: '',
+    code: '',
+    category: 'FRC - FIRST Robotics Competition',
+    institution: '',
+    description: '',
+    bankAccount: '',
+    leaderName: ''
+  }
+
+  const openCreateModal = () => {
+    setEditingTeam(null)
+    setFormData(emptyForm)
+    setIsModalOpen(true)
+  }
+
+  const openEditModal = (team: Team) => {
+    setEditingTeam(team)
+    setFormData({
+      name: team.name,
+      code: team.code,
+      category: team.category,
+      institution: team.institution || '',
+      description: team.description || '',
+      bankAccount: team.bankAccount || '',
+      leaderName: team.leaderName || ''
+    })
+    setIsModalOpen(true)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -49,23 +84,34 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
 
     try {
       setSubmitting(true)
-      await api.createTeam(formData)
-      showToast(`Equipe "${formData.name}" cadastrada com sucesso!`, 'success')
+      if (editingTeam) {
+        await adminApi.updateTeam(editingTeam.id, formData)
+        showToast(`Equipe "${formData.name}" atualizada com sucesso!`, 'success')
+      } else {
+        await adminApi.createTeam(formData)
+        showToast(`Equipe "${formData.name}" cadastrada com sucesso!`, 'success')
+      }
       setIsModalOpen(false)
-      setFormData({
-        name: '',
-        code: '',
-        category: 'FRC - FIRST Robotics Competition',
-        institution: '',
-        description: '',
-        bankAccount: '',
-        leaderName: ''
-      })
+      setEditingTeam(null)
+      setFormData(emptyForm)
       onTeamCreated()
     } catch (err: any) {
-      showToast(err.message || 'Erro ao cadastrar equipe.', 'error')
+      showToast(err.message || (editingTeam ? 'Erro ao atualizar equipe.' : 'Erro ao cadastrar equipe.'), 'error')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    const target = confirmDelete
+    setConfirmDelete(null)
+    try {
+      await adminApi.deleteTeam(target.id)
+      showToast(`Equipe "${target.name}" excluída com sucesso!`, 'success')
+      onTeamCreated()
+    } catch (err: any) {
+      showToast(err.message || 'Erro ao excluir equipe.', 'error')
     }
   }
 
@@ -83,9 +129,14 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
         </div>
 
         {hasGlobalAccess && (
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-            <PlusCircle size={16} /> Cadastrar Nova Equipe
-          </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn btn-primary" onClick={openCreateModal}>
+              <PlusCircle size={16} /> Cadastrar Nova Equipe
+            </button>
+            <a className="btn btn-outline" href="/admin" style={{ textDecoration: 'none' }}>
+              <UserCog size={16} /> Gerenciar Usuários
+            </a>
+          </div>
         )}
       </div>
 
@@ -132,8 +183,8 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
                 )}
               </div>
 
-              {onNavigateTab && (
-                <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {onNavigateTab && (
                   <button
                     type="button"
                     className="btn btn-outline btn-sm"
@@ -143,8 +194,31 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
                     <FileSpreadsheet size={15} color="var(--primary)" />
                     <span>Ver Extrato Financeiro</span>
                   </button>
-                </div>
-              )}
+                )}
+
+                {hasGlobalAccess && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      onClick={() => openEditModal(team)}
+                    >
+                      <Pencil size={14} color="var(--accent-cyan)" />
+                      <span>Editar</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--accent-rose)' }}
+                      onClick={() => setConfirmDelete(team)}
+                    >
+                      <Trash2 size={14} color="var(--accent-rose)" />
+                      <span>Apagar</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -158,7 +232,7 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
               <div className="modal-header">
                 <div className="modal-title">
                   <Users size={20} color="var(--accent-cyan)" />
-                  <span>Cadastrar Nova Equipe de Robótica</span>
+                  <span>{editingTeam ? 'Editar Equipe' : 'Cadastrar Nova Equipe de Robótica'}</span>
                 </div>
                 <button type="button" className="btn btn-outline btn-icon" onClick={() => setIsModalOpen(false)} style={{ padding: 6 }}>
                   ✕
@@ -265,10 +339,44 @@ export const TeamsManagementView: React.FC<TeamsManagementViewProps> = ({
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Cadastrando...' : 'Cadastrar Equipe'}
+                  {submitting ? 'Salvando...' : editingTeam ? 'Salvar Alterações' : 'Cadastrar Equipe'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {confirmDelete && (
+        <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <Trash2 size={20} color="var(--accent-rose)" />
+                <span>Excluir equipe</span>
+              </div>
+              <button type="button" className="btn btn-outline btn-icon" onClick={() => setConfirmDelete(null)} style={{ padding: 6 }}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: '0.9rem' }}>
+                Tem certeza que deseja excluir a equipe <strong>{confirmDelete.name}</strong>?
+              </p>
+              <p style={{ fontSize: '0.8125rem', marginTop: 10 }}>
+                Os usuários vinculados ficarão sem equipe. Equipes com patrocínios, despesas ou
+                solicitações de compra não podem ser excluídas.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>
+                Cancelar
+              </button>
+              <button type="button" className="btn btn-primary" style={{ background: 'var(--accent-rose)' }} onClick={handleDelete}>
+                Excluir Equipe
+              </button>
+            </div>
           </div>
         </div>
       )}

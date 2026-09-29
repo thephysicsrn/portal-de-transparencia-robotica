@@ -246,9 +246,9 @@ interface AdminPanelProps {
   onLogout: () => void
 }
 
-function AdminPanel({ adminUser, onLogout }: AdminPanelProps) {
+export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: AdminPanelProps & { initialTab?: 'teams' | 'users' | 'overview' }) {
   const { toasts, show: toast } = useAdminToast()
-  const [tab, setTab] = useState<'teams' | 'users' | 'overview'>('overview')
+  const [tab, setTab] = useState<'teams' | 'users' | 'overview'>(initialTab)
 
   const [teams, setTeams] = useState<AdminTeam[]>([])
   const [users, setUsers] = useState<AdminUser[]>([])

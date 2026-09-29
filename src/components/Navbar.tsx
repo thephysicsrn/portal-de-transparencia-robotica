@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   UserCheck,
   GraduationCap,
-  Building
+  Building,
+  UserCog
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
@@ -55,7 +56,10 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
     { id: 'sponsorships', label: isStudent ? 'Patrocínios (Transparência)' : 'Patrocínios', icon: HandCoins },
     ...(isStudent ? [] : [{ id: 'expenses', label: 'Despesas', icon: Receipt }]),
     ...(isStudent ? [] : [{ id: 'audit', label: 'Histórico & Auditoria', icon: History }]),
-    ...(hasGlobalAccess ? [{ id: 'teams', label: 'Equipes', icon: Users }] : [])
+    ...(hasGlobalAccess ? [
+      { id: 'teams', label: 'Equipes', icon: Users },
+      { id: 'adminUsers', label: 'Usuários', icon: UserCog }
+    ] : [])
   ]
 
   return (

@@ -10,7 +10,7 @@ import { PurchaseRequestsView } from './components/PurchaseRequestsView'
 import { AccountabilityView } from './components/AccountabilityView'
 import { AuditHistoryView } from './components/AuditHistoryView'
 import { TeamsManagementView } from './components/TeamsManagementView'
-import { AdminView } from './components/AdminView'
+import { AdminView, AdminPanel } from './components/AdminView'
 import type { PurchaseRequest } from './types'
 import { Info, AlertTriangle } from 'lucide-react'
 import './App.css'
@@ -21,7 +21,7 @@ const isAdminRoute = normalizedPath === '/admin' || normalizedPath.startsWith('/
 
 
 const AppMain: React.FC = () => {
-  const { user, isLoading, teams, refreshTeams } = useAuth()
+  const { user, isLoading, teams, refreshTeams, hasGlobalAccess, logout } = useAuth()
 
   const [currentTab, setCurrentTab] = useState<string>('dashboard')
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
@@ -160,6 +160,10 @@ const AppMain: React.FC = () => {
             onTeamCreated={refreshTeams}
             onNavigateTab={handleNavigateTab}
           />
+        )}
+
+        {currentTab === 'adminUsers' && user && hasGlobalAccess && (
+          <AdminPanel adminUser={user as any} onLogout={logout} initialTab="users" />
         )}
       </main>
     </div>

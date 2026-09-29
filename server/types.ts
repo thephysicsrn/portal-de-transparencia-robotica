@@ -138,6 +138,8 @@ export interface DatabaseSchema {
   expenses: Expense[]
   purchaseRequests: PurchaseRequest[]
   auditLogs: AuditLog[]
+  // Marks that the default demo accounts were already merged, so deleted users stay deleted
+  demoAccountsMerged?: boolean
 }
 
 export interface TeamFinancialSummary {

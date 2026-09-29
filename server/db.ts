@@ -215,15 +215,22 @@ class Database {
   private applySeedMigrations(data: DatabaseSchema): DatabaseSchema {
     let changed = false
 
-    for (const seedUser of getDefaultDatabase().users) {
-      const existing = data.users.find(u => u.id === seedUser.id || u.email.toLowerCase() === seedUser.email.toLowerCase())
-      if (!existing) {
-        data.users.push(seedUser)
-        changed = true
-      } else if (existing.role !== seedUser.role) {
-        existing.role = seedUser.role
-        changed = true
+    // Runs only once: otherwise deleted accounts and profile changes would be reverted on each load
+    if (!data.demoAccountsMerged) {
+      // Only the administrative accounts are guaranteed to exist. Demo students and coaches are
+      // free to be deleted and must never be recreated.
+      const requiredSeeds = getDefaultDatabase().users.filter(
+        u => u.role === 'system_admin' || u.role === 'technical_lead'
+      )
+      for (const seedUser of requiredSeeds) {
+        const existing = data.users.find(u => u.id === seedUser.id || u.email.toLowerCase() === seedUser.email.toLowerCase())
+        if (!existing) {
+          data.users.push(seedUser)
+          changed = true
+        }
       }
+      data.demoAccountsMerged = true
+      changed = true
     }
 
     // Legacy databases still carry the retired "team_rep" role

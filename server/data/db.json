@@ -141,5 +141,6 @@
       "entityId": "root",
       "description": "Base de dados limpa com sucesso. Pronto para inserção dos dados originais."
     }
-  ]
+  ],
+  "demoAccountsMerged": true
 }

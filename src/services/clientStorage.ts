@@ -22,41 +22,58 @@ interface ClientDbState {
   expenses: Expense[]
   purchaseRequests: PurchaseRequest[]
   auditLogs: AuditLog[]
+  // Marks that the default demo accounts were already merged, so deleted users stay deleted
+  demoAccountsMerged?: boolean
 }
 
 // Adds seed records that are missing, so previously stored databases pick up new default users
-function applySeedMigrations(state: ClientDbState): ClientDbState {
-  if (!Array.isArray(state.users)) state.users = []
-  if (!Array.isArray(state.teams)) state.teams = []
-  if (!Array.isArray(state.sponsorships)) state.sponsorships = []
-  if (!Array.isArray(state.expenses)) state.expenses = []
-  if (!Array.isArray(state.purchaseRequests)) state.purchaseRequests = []
-  if (!Array.isArray(state.auditLogs)) state.auditLogs = []
+function applySeedMigrations(state: ClientDbState): { state: ClientDbState; changed: boolean } {
+  let changed = false
+  if (!Array.isArray(state.users)) { state.users = []; changed = true }
+  if (!Array.isArray(state.teams)) { state.teams = []; changed = true }
+  if (!Array.isArray(state.sponsorships)) { state.sponsorships = []; changed = true }
+  if (!Array.isArray(state.expenses)) { state.expenses = []; changed = true }
+  if (!Array.isArray(state.purchaseRequests)) { state.purchaseRequests = []; changed = true }
+  if (!Array.isArray(state.auditLogs)) { state.auditLogs = []; changed = true }
 
-  for (const seedUser of INITIAL_MOCK_DATA.users) {
-    if (!state.users.some(u => u.id === seedUser.id)) {
-      state.users.push(seedUser)
+  // Runs only once: otherwise deleted accounts and profile changes would be reverted on each load
+  if (!state.demoAccountsMerged) {
+    // Only the administrative accounts are guaranteed to exist. Demo students and coaches are
+    // free to be deleted and must never be recreated.
+    const requiredSeeds = INITIAL_MOCK_DATA.users.filter(
+      u => u.role === 'system_admin' || u.role === 'technical_lead'
+    )
+    for (const seedUser of requiredSeeds) {
+      if (!state.users.some(u => u.id === seedUser.id || u.email.toLowerCase() === seedUser.email.toLowerCase())) {
+        state.users.push(seedUser)
+        changed = true
+      }
     }
+    state.demoAccountsMerged = true
+    changed = true
   }
 
   // Legacy databases still carry the retired "team_rep" role
   for (const user of state.users) {
     if (user.role === 'team_rep') {
       user.role = 'team_coach'
+      changed = true
     }
   }
 
   for (const log of state.auditLogs) {
     if (log.userRole === 'team_rep') {
       log.userRole = 'team_coach'
+      changed = true
     }
   }
 
-  return state
+  return { state, changed }
 }
 
 function seedState(): ClientDbState {
   const initial = JSON.parse(JSON.stringify(INITIAL_MOCK_DATA))
+  initial.demoAccountsMerged = true
   saveState(initial)
   return initial
 }
@@ -67,7 +84,9 @@ function loadState(): ClientDbState {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.teams) && Array.isArray(parsed.sponsorships)) {
-        return applySeedMigrations(parsed)
+        const { state, changed } = applySeedMigrations(parsed)
+        if (changed) saveState(state)
+        return state
       }
       console.warn('Stored client database has an unexpected shape, reinitializing with seed data')
     }

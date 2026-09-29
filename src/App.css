@@ -509,3 +509,89 @@
 .admin-panel select {
   color: #f1f5f9;
 }
+
+/* O painel administrativo e escuro, mas o portal usa tema claro com as mesmas variaveis.
+   Este escopo redefine os tokens dentro do painel para nao herdar cores claras. */
+.admin-panel {
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --text-main: #f1f5f9;
+  --text-muted: #a8b8cc;
+  --text-dim: #94a3b8;
+  --border-subtle: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --primary: #22d3ee;
+  --primary-light: #67e8f9;
+  --accent-cyan: #22d3ee;
+  --accent-emerald: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #f87171;
+  color: #f1f5f9;
+  background-color: #020617;
+  color-scheme: dark;
+}
+
+/* O painel traz .card e .modal-content do tema claro; aqui eles viram escuros */
+.admin-panel .card,
+.admin-panel .modal-content {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #f1f5f9;
+}
+
+.admin-panel .modal-header,
+.admin-panel .modal-footer {
+  background: #0b1524;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.admin-panel .modal-title,
+.admin-panel h1,
+.admin-panel h2,
+.admin-panel h3,
+.admin-panel h4 {
+  color: #f1f5f9;
+}
+
+.admin-panel .form-input,
+.admin-panel .form-select,
+.admin-panel .form-textarea,
+.admin-panel .search-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #f1f5f9;
+}
+
+.admin-panel .form-label {
+  color: #e2e8f0;
+}
+
+.admin-panel .data-table tbody tr,
+.admin-panel .data-table th,
+.admin-panel .data-table td,
+.admin-panel .table-responsive {
+  background: #0f172a;
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.admin-panel .data-table th {
+  color: #a8b8cc;
+}
+
+.admin-panel .btn-secondary,
+.admin-panel .btn-outline {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.admin-panel .btn-secondary:hover,
+.admin-panel .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: #f1f5f9;
+}
+
+.admin-panel p {
+  color: #cbd5e1;
+}

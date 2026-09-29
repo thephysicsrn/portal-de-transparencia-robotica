@@ -156,7 +156,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       padding: '20px'
     }} onClick={onClose}>
       <div style={{
-        background: 'var(--bg-secondary, #0f172a)',
+        background: '#0f172a',
         border: '1px solid rgba(255,255,255,0.18)',
         borderRadius: 16,
         width: '100%',
@@ -171,10 +171,10 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
           borderBottom: '1px solid rgba(255,255,255,0.16)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
-          <h3 style={{ color: 'var(--text-main, #f1f5f9)', fontWeight: 700, fontSize: '1.05rem' }}>{title}</h3>
+          <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: '1.05rem' }}>{title}</h3>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text-muted, #94a3b8)', padding: 4, borderRadius: 6,
+            color: '#a8b8cc', padding: 4, borderRadius: 6,
             display: 'flex', alignItems: 'center'
           }}>
             <X size={20} />
@@ -196,12 +196,12 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
           <div style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }}><AlertTriangle size={22} /></div>
-          <p style={{ color: 'var(--text-main, #f1f5f9)', lineHeight: 1.6, margin: 0 }}>{message}</p>
+          <p style={{ color: '#f1f5f9', lineHeight: 1.6, margin: 0 }}>{message}</p>
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{
             padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
-            background: 'transparent', color: 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontWeight: 600
+            background: 'transparent', color: '#a8b8cc', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button onClick={onConfirm} style={{
             padding: '9px 20px', borderRadius: 8, border: 'none',
@@ -218,7 +218,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#a8b8cc', marginBottom: 6 }}>
         {label}{required && <span style={{ color: '#ef4444', marginLeft: 3 }}>*</span>}
       </label>
       {children}
@@ -232,7 +232,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 8,
   border: '1px solid rgba(255,255,255,0.20)',
   background: 'rgba(255,255,255,0.06)',
-  color: 'var(--text-main, #f1f5f9)',
+  color: '#f1f5f9',
   fontSize: '0.875rem',
   outline: 'none',
   boxSizing: 'border-box',
@@ -321,7 +321,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
   )
 
   return (
-    <div className="admin-panel" style={{ minHeight: '100vh', background: 'var(--bg-primary, #020617)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div className="admin-panel" style={{ minHeight: '100vh', background: '#020617', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <ToastContainer toasts={toasts} />
 
       {/* Confirm Dialog */}
@@ -1089,10 +1089,10 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
   }
 
   return (
-    <div style={{
+    <div className="admin-panel" style={{
       minHeight: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg-primary, #020617)',
+      background: '#020617',
       padding: 24,
       fontFamily: "'Inter', -apple-system, sans-serif"
     }}>

@@ -69,7 +69,7 @@ function roleLabel(role: AdminRole) {
 }
 
 function roleColor(role: AdminRole) {
-  if (role === 'system_admin') return '#a78bfa'
+  if (role === 'system_admin') return '#c4b5fd'
   if (role === 'technical_lead') return '#06b6d4'
   if (role === 'team_coach' || role === 'team_rep') return '#10b981'
   return '#6366f1'
@@ -86,11 +86,11 @@ function financialDataSummary(fd: AdminTeam['financialData']): string {
 
 function RoleBadge({ role }: { role: AdminRole }) {
   const colors: Record<AdminRole, { bg: string; text: string; icon: React.ReactNode }> = {
-    system_admin: { bg: 'rgba(167,139,250,0.12)', text: '#a78bfa', icon: <ShieldCheck size={12} /> },
+    system_admin: { bg: 'rgba(167,139,250,0.12)', text: '#c4b5fd', icon: <ShieldCheck size={12} /> },
     technical_lead: { bg: 'rgba(6,182,212,0.12)', text: '#06b6d4', icon: <Crown size={12} /> },
     team_coach: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
     team_rep: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
-    student: { bg: 'rgba(99,102,241,0.12)', text: '#818cf8', icon: <GraduationCap size={12} /> },
+    student: { bg: 'rgba(99,102,241,0.12)', text: '#a5b4fc', icon: <GraduationCap size={12} /> },
   }
   const c = colors[role] || colors.student
   return (
@@ -157,7 +157,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
     }} onClick={onClose}>
       <div style={{
         background: 'var(--bg-secondary, #0f172a)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: '1px solid rgba(255,255,255,0.18)',
         borderRadius: 16,
         width: '100%',
         maxWidth: 560,
@@ -168,7 +168,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       }} onClick={e => e.stopPropagation()}>
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(255,255,255,0.16)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
           <h3 style={{ color: 'var(--text-main, #f1f5f9)', fontWeight: 700, fontSize: '1.05rem' }}>{title}</h3>
@@ -200,7 +200,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{
-            padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
             background: 'transparent', color: 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button onClick={onConfirm} style={{
@@ -230,14 +230,15 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 8,
-  border: '1px solid rgba(255,255,255,0.1)',
-  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.20)',
+  background: 'rgba(255,255,255,0.06)',
   color: 'var(--text-main, #f1f5f9)',
   fontSize: '0.875rem',
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s'
 }
+
 
 // ── Main Admin Panel ───────────────────────────────────────────────────────────
 
@@ -320,7 +321,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary, #020617)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div className="admin-panel" style={{ minHeight: '100vh', background: 'var(--bg-primary, #020617)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <ToastContainer toasts={toasts} />
 
       {/* Confirm Dialog */}
@@ -384,7 +385,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
       {/* Header */}
       <header style={{
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        borderBottom: '1px solid rgba(255,255,255,0.16)',
         background: 'rgba(15,23,42,0.95)',
         backdropFilter: 'blur(12px)',
         padding: '0 24px',
@@ -401,7 +402,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
             </div>
             <div>
               <div style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}>Painel Administrativo</div>
-              <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: 2 }}>Portal de Transparência da Robótica</div>
+              <div style={{ color: '#a8b8cc', fontSize: '0.72rem', marginTop: 2 }}>Portal de Transparência da Robótica</div>
             </div>
           </div>
 
@@ -428,7 +429,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 28, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28, borderBottom: '1px solid rgba(255,255,255,0.16)', paddingBottom: 0 }}>
           {([
             { key: 'overview', label: 'Visão Geral', icon: <LayoutDashboard size={16} /> },
             { key: 'teams', label: 'Equipes', icon: <UsersRound size={16} /> },
@@ -442,7 +443,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 padding: '10px 18px',
                 border: 'none', borderRadius: '8px 8px 0 0',
                 background: tab === t.key ? 'rgba(6,182,212,0.1)' : 'transparent',
-                color: tab === t.key ? '#06b6d4' : '#64748b',
+                color: tab === t.key ? '#06b6d4' : '#a8b8cc',
                 fontWeight: tab === t.key ? 700 : 500,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
@@ -457,8 +458,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
             onClick={loadData}
             style={{
               marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
-              padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)',
-              background: 'transparent', color: '#64748b', cursor: 'pointer', fontSize: '0.8125rem',
+              padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.16)',
+              background: 'transparent', color: '#a8b8cc', cursor: 'pointer', fontSize: '0.8125rem',
               marginBottom: 2
             }}
           >
@@ -478,7 +479,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60, color: '#64748b' }}>Carregando dados...</div>
+          <div style={{ textAlign: 'center', padding: 60, color: '#a8b8cc' }}>Carregando dados...</div>
         ) : (
           <>
             {/* ── OVERVIEW TAB ── */}
@@ -492,27 +493,27 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     { label: 'Equipes', value: teams.length, color: '#06b6d4', icon: <UsersRound size={22} /> },
                     { label: 'Total de Usuários', value: totalUsers, color: '#3b82f6', icon: <Users size={22} /> },
                     { label: 'Técnicos', value: totalTechnicians, color: '#10b981', icon: <UserCheck size={22} /> },
-                    { label: 'Alunos', value: totalStudents, color: '#818cf8', icon: <GraduationCap size={22} /> },
+                    { label: 'Alunos', value: totalStudents, color: '#a5b4fc', icon: <GraduationCap size={22} /> },
                     { label: 'Sem Equipe', value: unlinkedUsers, color: '#f59e0b', icon: <Link2 size={22} /> },
-                    { label: 'Admins de TI', value: totalSystemAdmins, color: '#a78bfa', icon: <ShieldCheck size={22} /> },
+                    { label: 'Admins de TI', value: totalSystemAdmins, color: '#c4b5fd', icon: <ShieldCheck size={22} /> },
                   ].map(s => (
                     <div key={s.label} style={{
                       background: 'rgba(15,23,42,0.8)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.16)',
                       borderRadius: 12, padding: '20px',
                       display: 'flex', alignItems: 'center', gap: 14
                     }}>
                       <div style={{ color: s.color }}>{s.icon}</div>
                       <div>
                         <div style={{ fontSize: '1.75rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-                        <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: 4 }}>{s.label}</div>
+                        <div style={{ color: '#a8b8cc', fontSize: '0.8rem', marginTop: 4 }}>{s.label}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Teams overview cards */}
-                <h3 style={{ color: '#94a3b8', fontWeight: 700, marginBottom: 14, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 style={{ color: '#cbd5e1', fontWeight: 700, marginBottom: 14, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Equipes e Membros
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -523,7 +524,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     return (
                       <div key={team.id} style={{
                         background: 'rgba(15,23,42,0.7)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.16)',
                         borderRadius: 12, padding: '18px 20px',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -539,13 +540,13 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 background: 'rgba(6,182,212,0.1)', padding: '2px 8px', borderRadius: 20, fontWeight: 700
                               }}>{team.code}</span>
                             </div>
-                            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 4, marginLeft: 18 }}>{team.category}</div>
+                            <div style={{ color: '#a8b8cc', fontSize: '0.78rem', marginTop: 4, marginLeft: 18 }}>{team.category}</div>
                           </div>
                           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
                               <UserCheck size={14} />{coaches.length} Técnico{coaches.length !== 1 ? 's' : ''}
                             </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#818cf8', fontSize: '0.8rem', fontWeight: 600 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#a5b4fc', fontSize: '0.8rem', fontWeight: 600 }}>
                               <GraduationCap size={14} />{students.length} Aluno{students.length !== 1 ? 's' : ''}
                             </span>
                           </div>
@@ -567,11 +568,11 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 display: 'flex', alignItems: 'center', gap: 6,
                                 padding: '4px 10px', borderRadius: 20,
                                 background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.06)'
+                                border: '1px solid rgba(255,255,255,0.16)'
                               }}>
                                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: roleColor(u.role) }} />
                                 <span style={{ color: '#cbd5e1', fontSize: '0.775rem', fontWeight: 600 }}>{u.name}</span>
-                                <span style={{ color: '#475569', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
+                                <span style={{ color: '#b6c4d6', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
                               </div>
                             ))}
                           </div>
@@ -580,7 +581,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     )
                   })}
                   {teams.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>
+                    <div style={{ textAlign: 'center', padding: 40, color: '#b6c4d6' }}>
                       Nenhuma equipe cadastrada. <button onClick={() => { setTab('teams'); setTeamModal({ mode: 'create' }) }} style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}>Criar equipe</button>
                     </div>
                   )}
@@ -610,7 +611,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
                 {/* Search */}
                 <div style={{ position: 'relative', marginBottom: 16 }}>
-                  <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                  <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b6c4d6' }} />
                   <input
                     type="text"
                     placeholder="Buscar equipes..."
@@ -630,7 +631,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     return (
                       <div key={team.id} style={{
                         background: 'rgba(15,23,42,0.8)',
-                        border: '1px solid rgba(255,255,255,0.07)',
+                        border: '1px solid rgba(255,255,255,0.16)',
                         borderRadius: 12, padding: '20px',
                         transition: 'border-color 0.15s'
                       }}>
@@ -643,19 +644,19 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 {team.code}
                               </span>
                             </div>
-                            <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: 8 }}>{team.category} · {team.institution || 'Instituição não informada'}</div>
+                            <div style={{ color: '#a8b8cc', fontSize: '0.8rem', marginBottom: 8 }}>{team.category} · {team.institution || 'Instituição não informada'}</div>
                             {team.description && (
-                              <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: 10 }}>{team.description}</div>
+                              <div style={{ color: '#cbd5e1', fontSize: '0.8rem', marginBottom: 10 }}>{team.description}</div>
                             )}
                             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                               <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <UserCheck size={13} /> {coaches.length} Técnico{coaches.length !== 1 ? 's' : ''}
                               </span>
-                              <span style={{ color: '#818cf8', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ color: '#a5b4fc', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <GraduationCap size={13} /> {students.length} Aluno{students.length !== 1 ? 's' : ''}
                               </span>
                               {team.leaderName && (
-                                <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ color: '#a8b8cc', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
                                   <Crown size={12} color="#f59e0b" /> {team.leaderName}
                                 </span>
                               )}
@@ -665,8 +666,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                             <button
                               onClick={() => setTeamModal({ mode: 'edit', data: team })}
                               style={{
-                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
-                                background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer',
+                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
+                                background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 600
                               }}
                             >
@@ -679,9 +680,9 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                               title={hasData ? `Bloqueado: ${financialDataSummary(fd)} registrado(s)` : 'Excluir equipe'}
                               style={{
                                 padding: '7px 12px', borderRadius: 8,
-                                border: hasData ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(239,68,68,0.15)',
+                                border: hasData ? '1px solid rgba(255,255,255,0.16)' : '1px solid rgba(239,68,68,0.15)',
                                 background: hasData ? 'rgba(255,255,255,0.02)' : 'rgba(239,68,68,0.06)',
-                                color: hasData ? '#475569' : '#f87171', cursor: 'pointer',
+                                color: hasData ? '#b6c4d6' : '#f87171', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 600
                               }}
                             >
@@ -709,7 +710,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                         {/* Members preview */}
                         {teamUsers.length > 0 && (
                           <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#475569', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Membros</div>
+                            <div style={{ color: '#b6c4d6', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Membros</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                               {teamUsers.map(u => (
                                 <div key={u.id} style={{
@@ -720,7 +721,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 }}>
                                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: roleColor(u.role) }} />
                                   <span style={{ color: '#cbd5e1', fontSize: '0.775rem', fontWeight: 600 }}>{u.name}</span>
-                                  <span style={{ color: '#475569', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
+                                  <span style={{ color: '#b6c4d6', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
                                 </div>
                               ))}
                             </div>
@@ -730,7 +731,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     )
                   })}
                   {filteredTeams.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 50, color: '#475569', fontSize: '0.9rem' }}>
+                    <div style={{ textAlign: 'center', padding: 50, color: '#b6c4d6', fontSize: '0.9rem' }}>
                       {searchTeam ? 'Nenhuma equipe encontrada.' : 'Nenhuma equipe cadastrada ainda.'}
                     </div>
                   )}
@@ -761,7 +762,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 {/* Role filter chips */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
-                    <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+                    <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b6c4d6' }} />
                     <input
                       type="text"
                       placeholder="Buscar usuários..."
@@ -773,14 +774,14 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 </div>
 
                 {/* Users table */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.02)' }}>
                         {['Nome', 'E-mail', 'Papel', 'Equipe', 'Ações'].map(h => (
                           <th key={h} style={{
                             padding: '12px 16px', textAlign: 'left',
-                            color: '#475569', fontSize: '0.75rem', fontWeight: 700,
+                            color: '#b6c4d6', fontSize: '0.75rem', fontWeight: 700,
                             textTransform: 'uppercase', letterSpacing: '0.05em'
                           }}>{h}</th>
                         ))}
@@ -794,9 +795,9 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                         }}>
                           <td style={{ padding: '14px 16px' }}>
                             <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '0.875rem' }}>{u.name}</div>
-                            {u.title && <div style={{ color: '#475569', fontSize: '0.72rem', marginTop: 2 }}>{u.title}</div>}
+                            {u.title && <div style={{ color: '#b6c4d6', fontSize: '0.72rem', marginTop: 2 }}>{u.title}</div>}
                           </td>
-                          <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '0.825rem' }}>{u.email}</td>
+                          <td style={{ padding: '14px 16px', color: '#a8b8cc', fontSize: '0.825rem' }}>{u.email}</td>
                           <td style={{ padding: '14px 16px' }}><RoleBadge role={u.role} /></td>
                           <td style={{ padding: '14px 16px' }}>
                             {u.team ? (
@@ -812,8 +813,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                               <button
                                 onClick={() => setUserModal({ mode: 'edit', data: u })}
                                 style={{
-                                  padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)',
-                                  background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer',
+                                  padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.18)',
+                                  background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', cursor: 'pointer',
                                   display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.775rem', fontWeight: 600
                                 }}
                               >
@@ -840,7 +841,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     </tbody>
                   </table>
                   {filteredUsers.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>
+                    <div style={{ textAlign: 'center', padding: 40, color: '#b6c4d6' }}>
                       {searchUser ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}
                     </div>
                   )}
@@ -934,8 +935,8 @@ function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
           <button type="button" onClick={onClose} style={{
-            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-            background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontWeight: 600
+            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
+            background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button type="submit" disabled={saving} style={{
             padding: '10px 24px', borderRadius: 8, border: 'none',
@@ -1017,7 +1018,7 @@ function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
             />
             <button type="button" onClick={() => setShowPass(p => !p)} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex'
+              background: 'none', border: 'none', cursor: 'pointer', color: '#a8b8cc', display: 'flex'
             }}>
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -1047,8 +1048,8 @@ function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
           <button type="button" onClick={onClose} style={{
-            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
-            background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontWeight: 600
+            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
+            background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button type="submit" disabled={saving} style={{
             padding: '10px 24px', borderRadius: 8, border: 'none',
@@ -1110,7 +1111,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           <h1 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.5rem', marginBottom: 8 }}>
             Painel Administrativo
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+          <p style={{ color: '#a8b8cc', fontSize: '0.875rem' }}>
             Acesso restrito à Responsável Técnica e ao Administrador de TI
           </p>
         </div>
@@ -1118,7 +1119,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
         {/* Card */}
         <div style={{
           background: 'rgba(15,23,42,0.9)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid rgba(255,255,255,0.18)',
           borderRadius: 16,
           padding: '32px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
@@ -1148,7 +1149,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
                 />
                 <button type="button" onClick={() => setShowPass(p => !p)} style={{
                   position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex'
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#a8b8cc', display: 'flex'
                 }}>
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -1185,15 +1186,15 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           </form>
 
           <div style={{
-            marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.06)',
-            textAlign: 'center', color: '#475569', fontSize: '0.775rem'
+            marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.16)',
+            textAlign: 'center', color: '#b6c4d6', fontSize: '0.775rem'
           }}>
             Este painel é exclusivo para gerenciamento de equipes e usuários do sistema.
           </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/" style={{ color: '#475569', fontSize: '0.8rem', textDecoration: 'none' }}>
+          <a href="/" style={{ color: '#b6c4d6', fontSize: '0.8rem', textDecoration: 'none' }}>
             ← Voltar para o Portal
           </a>
           <div style={{ marginTop: 14 }}>
@@ -1206,7 +1207,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
               }}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                color: '#64748b', fontSize: '0.75rem', textDecoration: 'underline'
+                color: '#a8b8cc', fontSize: '0.75rem', textDecoration: 'underline'
               }}
             >
               Painel não carrega? Limpar dados deste navegador

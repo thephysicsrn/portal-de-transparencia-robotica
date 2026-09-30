@@ -1,5 +1,7 @@
 import type { PurchaseStatus } from '../types'
 import { clientStorage } from './clientStorage'
+import { isFirestoreReady } from './firebase/store'
+import { firebaseApi } from './api.firebase'
 
 const API_BASE = '/api'
 
@@ -83,7 +85,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 }
 
-export const api = {
+const localApi = {
   // Auth
   login: async (credentials: { email: string; password: string }) => {
     if (isStaticHosting || !isBackendAvailable) {
@@ -437,3 +439,8 @@ export const api = {
     }
   }
 }
+
+// Com o Firebase configurado, a aplicação inteira lê e grava no Firestore.
+// O caminho local permanece para desenvolvimento e para os testes que rodam
+// sem projeto configurado.
+export const api: typeof localApi = isFirestoreReady ? (firebaseApi as unknown as typeof localApi) : localApi

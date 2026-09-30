@@ -124,6 +124,7 @@ export async function signInOrProvision(email: string, password: string): Promis
 }
 
 export async function signOutFirebase() {
+  cachedProfile = null
   if (auth) await signOut(auth)
 }
 
@@ -149,10 +150,22 @@ function requireAuth() {
 
 // ── perfis ─────────────────────────────────────────────────────────────────
 
+// Perfil da sessão corrente. A camada de API usa este cache para aplicar o
+// escopo de equipe sem precisar repassar o usuário em cada chamada.
+let cachedProfile: User | null = null
+
+export function getCurrentProfile(): User | null {
+  return cachedProfile
+}
+
 export async function fetchProfile(uid: string): Promise<User | null> {
   const snapshot = await getDoc(doc(requireDb(), COLLECTIONS.users, uid))
-  if (!snapshot.exists()) return null
-  return { id: snapshot.id, ...snapshot.data() } as User
+  if (!snapshot.exists()) {
+    cachedProfile = null
+    return null
+  }
+  cachedProfile = { id: snapshot.id, ...snapshot.data() } as User
+  return cachedProfile
 }
 
 export async function fetchUsers(): Promise<User[]> {

@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { User, Team } from '../types'
 import { api } from '../services/api'
+import {
+  isFirestoreReady,
+  signInWithEmail,
+  signOutFirebase,
+  watchAuth,
+  fetchProfile,
+  fetchTeams
+} from '../services/firebase/store'
 
 
 interface AuthContextType {
@@ -35,6 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [teams, setTeams] = useState<Team[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
+  // Firebase Auth é a fonte da verdade da sessão; o fallback local só entra
+  // quando o Firebase não está configurado
+  const [usingFirebase, setUsingFirebase] = useState(isFirestoreReady)
 
   const isSystemAdmin = user?.role === 'system_admin'
   const isTechnicalLead = user?.role === 'technical_lead'
@@ -47,12 +58,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadTeams = async () => {
     try {
+      if (usingFirebase) {
+        setTeams(await fetchTeams())
+        return
+      }
       const data = await api.getTeams()
       setTeams(data)
     } catch (err) {
       console.error('Erro ao carregar equipes:', err)
     }
   }
+
+  // Firebase Auth guarda a sessão entre recargas; o perfil e as permissões são
+  // lidos do Firestore, onde as regras amarram o documento ao uid da sessão
+  useEffect(() => {
+    if (!isFirestoreReady) return
+
+    let cancelled = false
+    setUsingFirebase(true)
+
+    const unsubscribe = watchAuth(async firebaseUser => {
+      try {
+        if (!firebaseUser) {
+          if (!cancelled) {
+            setToken(null)
+            setUser(null)
+            setIsLoading(false)
+          }
+          return
+        }
+
+        const profile = await fetchProfile(firebaseUser.uid)
+        if (cancelled) return
+
+        if (!profile) {
+          // conta existe no Auth mas não foi criada pelo painel administrativo
+          await signOutFirebase()
+          setToken(null)
+          setUser(null)
+          setIsLoading(false)
+          return
+        }
+
+        setUser(profile)
+        localStorage.setItem('user', JSON.stringify(profile))
+        const idToken = await firebaseUser.getIdToken()
+        setToken(idToken)
+        await loadTeams()
+        setIsLoading(false)
+      } catch (err) {
+        console.error('Erro ao restaurar sessão do Firebase:', err)
+        setIsLoading(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const refreshUser = async () => {
     if (!token) {
@@ -92,6 +157,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user, hasGlobalAccess])
 
   const login = async (credentials: { email: string; password: string }) => {
+    if (isFirestoreReady) {
+      const firebaseUser = await signInWithEmail(credentials.email, credentials.password)
+      const profile = await fetchProfile(firebaseUser.uid)
+      if (!profile) {
+        await signOutFirebase()
+        throw new Error('Este e-mail não está cadastrado no portal. Fale com o administrador.')
+      }
+      const idToken = await firebaseUser.getIdToken()
+      setToken(idToken)
+      setUser(profile)
+      localStorage.setItem('user', JSON.stringify(profile))
+      setSelectedTeamId(
+        profile.role === 'system_admin' || profile.role === 'technical_lead' ? 'all' : profile.teamId || 'all'
+      )
+      await loadTeams()
+      return
+    }
+
     const res = await api.login(credentials)
     setToken(res.token)
     setUser(res.user)
@@ -106,6 +189,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const logout = () => {
+    if (isFirestoreReady) {
+      void signOutFirebase()
+    }
     setToken(null)
     setUser(null)
     localStorage.removeItem('token')

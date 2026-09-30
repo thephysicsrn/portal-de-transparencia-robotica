@@ -1,5 +1,4 @@
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
@@ -96,31 +95,6 @@ export async function signInWithEmail(email: string, password: string): Promise<
     throw new Error('Este e-mail não está cadastrado no portal. Fale com o administrador.')
   }
   return credential.user
-}
-
-export async function signInOrProvision(email: string, password: string): Promise<FirebaseUser> {
-  const a = requireAuth()
-  const normalized = email.trim().toLowerCase()
-  try {
-    return await signInWithEmail(normalized, password)
-  } catch (err: any) {
-    const code = err?.code
-    if (code !== 'auth/invalid-credential' && code !== 'auth/user-not-found' && code !== 'auth/wrong-password') {
-      throw err
-    }
-  }
-
-  // Primeira entrada: cria a conta no Auth. O documento de perfil precisa
-  // existir, senão as regras negam qualquer leitura.
-  const pendingEmail = email.trim().toLowerCase()
-  const probe = await getDocs(collection(requireDb(), COLLECTIONS.users))
-  const match = probe.docs.find(d => (d.data().email || '').toLowerCase() === pendingEmail)
-  if (!match) {
-    throw new Error('Este e-mail não está cadastrado no portal. Fale com o administrador.')
-  }
-
-  const created = await createUserWithEmailAndPassword(a, pendingEmail, password)
-  return created.user
 }
 
 export async function signOutFirebase() {

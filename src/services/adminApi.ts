@@ -206,11 +206,11 @@ const firestoreAdminApi = {
   },
 
   updateUser: async (id: string, payload: any) => {
-    return await adminApiBridge.updateUser({ uid: id, ...payload })
+    return await adminApiBridge.updateUser({ id, ...payload })
   },
 
   deleteUser: async (id: string) => {
-    return await adminApiBridge.deleteUser({ uid: id })
+    return await adminApiBridge.deleteUser({ id })
   },
 
   createTeam: async (payload: any) => {

@@ -26,6 +26,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { ReceiptViewerModal } from './ReceiptViewerModal'
+import { resolveFormDefaultTeam } from '../utils/teamScope'
 
 interface PurchaseRequestsViewProps {
   teams: Team[]
@@ -69,7 +70,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
   // New Request Form State
   const [formData, setFormData] = useState({
     title: '',
-    teamId: user?.teamId || (teams[0]?.id || ''),
+    teamId: resolveFormDefaultTeam(user, teams),
     purpose: '',
     justification: '',
     urgency: 'media' as 'baixa' | 'media' | 'alta' | 'critica',
@@ -213,7 +214,7 @@ export const PurchaseRequestsView: React.FC<PurchaseRequestsViewProps> = ({
       onCloseModal()
       setFormData({
         title: '',
-        teamId: user?.teamId || (teams[0]?.id || ''),
+        teamId: resolveFormDefaultTeam(user, teams),
         purpose: '',
         justification: '',
         urgency: 'media',

@@ -23,6 +23,7 @@ import { exportStatementToCSV } from '../utils/csvExporter'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { ReceiptViewerModal } from './ReceiptViewerModal'
+import { resolveReadScope } from '../utils/teamScope'
 
 interface AccountabilityViewProps {
   teams: Team[]
@@ -68,7 +69,7 @@ export const AccountabilityView: React.FC<AccountabilityViewProps> = ({
     try {
       setLoading(true)
       const data = await api.getStatement({
-        teamId: hasGlobalAccess ? teamFilter : user?.teamId || undefined,
+        teamId: resolveReadScope(user, teamFilter) || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         category: categoryFilter !== 'all' ? categoryFilter : undefined

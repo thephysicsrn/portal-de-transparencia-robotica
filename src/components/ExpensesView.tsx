@@ -18,6 +18,7 @@ import { formatCurrency, formatDate, EXPENSE_CATEGORIES, getCategoryBadgeColor }
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { ReceiptViewerModal } from './ReceiptViewerModal'
+import { resolveFormDefaultTeam } from '../utils/teamScope'
 
 interface ExpensesViewProps {
   teams: Team[]
@@ -61,7 +62,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
     amount: '',
     expenseDate: new Date().toISOString().slice(0, 10),
     supplier: '',
-    teamId: user?.teamId || (teams[0]?.id || ''),
+    teamId: resolveFormDefaultTeam(user, teams),
     receiptUrl: '',
     receiptFileName: ''
   })
@@ -132,7 +133,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
         amount: '',
         expenseDate: new Date().toISOString().slice(0, 10),
         supplier: '',
-        teamId: user?.teamId || (teams[0]?.id || ''),
+        teamId: resolveFormDefaultTeam(user, teams),
         receiptUrl: '',
         receiptFileName: ''
       })

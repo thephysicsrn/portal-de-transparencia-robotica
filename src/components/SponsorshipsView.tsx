@@ -16,6 +16,7 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
 import { ReceiptViewerModal } from './ReceiptViewerModal'
+import { resolveFormDefaultTeam } from '../utils/teamScope'
 
 interface SponsorshipsViewProps {
   teams: Team[]
@@ -53,7 +54,7 @@ export const SponsorshipsView: React.FC<SponsorshipsViewProps> = ({
   // New Sponsorship Form State
   const [formData, setFormData] = useState({
     sponsorName: '',
-    teamId: user?.teamId || (teams[0]?.id || ''),
+    teamId: resolveFormDefaultTeam(user, teams),
     amount: '',
     receiptDate: new Date().toISOString().slice(0, 10),
     purpose: '',
@@ -124,7 +125,7 @@ export const SponsorshipsView: React.FC<SponsorshipsViewProps> = ({
       onCloseModal()
       setFormData({
         sponsorName: '',
-        teamId: user?.teamId || (teams[0]?.id || ''),
+        teamId: resolveFormDefaultTeam(user, teams),
         amount: '',
         receiptDate: new Date().toISOString().slice(0, 10),
         purpose: '',

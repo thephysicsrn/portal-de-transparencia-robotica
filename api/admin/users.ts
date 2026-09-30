@@ -77,6 +77,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(204).end()
   }
 
+  // Falha de configuração é diferente de acesso negado: sem isso, a ausência da
+  // credencial se disfarça de "sessão inválida" e nobody sabe o que corrigir.
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.FIREBASE_CLIENT_EMAIL) {
+    return res.status(503).json({
+      message:
+        'Credencial do Firebase não configurada nesta função. Defina FIREBASE_SERVICE_ACCOUNT nas variáveis de ambiente do projeto.'
+    })
+  }
+
   try {
     const admin = await requireAdmin(req, res)
     if (!admin) return

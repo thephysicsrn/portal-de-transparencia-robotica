@@ -64,7 +64,7 @@ async function requireAdmin(req: VercelRequest, res: VercelResponse) {
 
   const role = profile.data()?.role
   if (!ADMIN_ROLES.includes(role)) {
-    res.status(403).json({ message: 'Apenas a responsável técnica e o administrador de TI podemmanageir usuários.' })
+    res.status(403).json({ message: 'Apenas a responsável técnica e o administrador de TI podem gerenciar usuários.' })
     return null
   }
 

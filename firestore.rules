@@ -1,0 +1,119 @@
+rules_version = '2';
+
+// Firestore Security Rules do Portal de Transparência.
+//
+// Princípio: um técnico (team_coach) e um aluno (student) só enxergam dados
+// financeiros da própria equipe. A restrição é avaliada no servidor do Firebase,
+// então não pode ser contornada pelo DevTools.
+//
+// Perfis:
+//   system_admin     -> administrador de TI, acesso total
+//   technical_lead   -> responsável técnica, acesso total
+//   team_coach       -> técnico da equipe, só a própria equipe
+//   student          -> aluno, só a própria equipe
+//
+// Dados bancários ficam em teams/{teamId}/private para que a lista de equipes
+// possa ser lida por todos autenticados sem expor a chave PIX de terceiros.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myRole() {
+      return myUserDoc().data.role;
+    }
+
+    function isAdmin() {
+      return signedIn() && myRole() in ['system_admin', 'technical_lead'];
+    }
+
+    function myTeamId() {
+      return myUserDoc().data.teamId;
+    }
+
+    // equipe à qual o usuário logado pertence
+    function isMyTeam(teamId) {
+      return signedIn() && teamId != null && teamId == myTeamId();
+    }
+
+    // leitura de coleção financeira: admin vê tudo, demais vê só a própria equipe
+    function canReadTeamData(teamId) {
+      return isAdmin() || isMyTeam(teamId);
+    }
+
+    // gravação em-collection financeira: admin grava em qualquer equipe,
+    // técnico e aluno gravam apenas na própria equipe
+    function canWriteTeamData(teamId) {
+      return isAdmin() || isMyTeam(teamId);
+    }
+
+    // ── usuários ────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId) || isMyTeam(resource.data.teamId);
+      // admin cria e edita qualquer usuário; técnico e aluno só editam o próprio perfil
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+                    || (signedIn() && request.auth.uid == userId
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.teamId == resource.data.teamId);
+
+      // subcoleção de perfil estendido, se houver
+      match /{document=**} {
+        allow read, write: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      }
+    }
+
+    // ── equipes ─────────────────────────────────────────────────────────────
+    // O documento traz nome, código, categoria, instituição e descrição: dados
+    // públicos dentro do portal, legíveis por qualquer usuário autenticado para
+    // que o seletor de equipe funcione.
+    match /teams/{teamId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+
+      // chave PIX e conta bancária: só admin e a própria equipe
+      match /private/{docId} {
+        allow read: if isAdmin() || isMyTeam(teamId);
+        allow write: if isAdmin();
+      }
+    }
+
+    // ── dados financeiros ───────────────────────────────────────────────────
+    match /sponsorships/{sponsorshipId} {
+      allow read: if canReadTeamData(resource.data.teamId);
+      allow create: if canWriteTeamData(request.resource.data.teamId);
+      allow update, delete: if isAdmin() || isMyTeam(resource.data.teamId);
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if canReadTeamData(resource.data.teamId);
+      allow create: if canWriteTeamData(request.resource.data.teamId);
+      allow update, delete: if isAdmin() || isMyTeam(resource.data.teamId);
+    }
+
+    match /purchaseRequests/{requestId} {
+      allow read: if canReadTeamData(resource.data.teamId);
+      allow create: if canWriteTeamData(request.resource.data.teamId);
+      allow update, delete: if isAdmin() || isMyTeam(resource.data.teamId);
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAdmin() || isMyTeam(resource.data.teamId);
+      allow create: if canWriteTeamData(request.resource.data.teamId);
+      // o histórico é imutável
+      allow update, delete: if false;
+    }
+
+    // qualquer outra coleção é negada por padrão
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

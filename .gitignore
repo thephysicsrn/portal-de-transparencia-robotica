@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Segredos do Firebase
+.env
+.env.local
+.env.*.local

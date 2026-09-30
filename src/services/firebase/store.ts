@@ -419,6 +419,49 @@ export async function adminDeleteTeam(id: string) {
   await batch.commit()
 }
 
+// ── chamadas à função serverless ───────────────────────────────────────────
+// Criar contas no Auth exige o Admin SDK, que só roda no servidor. O cliente
+// envia o ID token para que a função identifique quem está chamando.
+
+async function callAdminApi(action: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', body: any) {
+  const a = requireAuth()
+  const current = a.currentUser
+  if (!current) {
+    throw new Error('Sessão expirada. Entre novamente.')
+  }
+
+  const token = await current.getIdToken()
+  const response = await fetch(`/api/admin/users?action=${action}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(body)
+  })
+
+  const text = await response.text()
+  let payload: any = null
+  try {
+    payload = text ? JSON.parse(text) : null
+  } catch {
+    payload = null
+  }
+
+  if (!response.ok) {
+    const message = payload?.message || `Falha ao chamar o servidor (${response.status}).`
+    throw new Error(message)
+  }
+
+  return payload
+}
+
+export const adminApiBridge = {
+  createUser: (payload: any) => callAdminApi('create', 'POST', payload),
+  updateUser: (payload: any) => callAdminApi('update', 'PUT', payload),
+  deleteUser: (payload: any) => callAdminApi('delete', 'DELETE', payload)
+}
+
 // ── migração do navegador para o Firestore ─────────────────────────────────
 
 export async function migrateFromLocalStorage(snapshot: {

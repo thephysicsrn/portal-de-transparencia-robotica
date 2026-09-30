@@ -1,0 +1,4 @@
+{
+  "//": "A raiz do projeto declara \"type\": \"module\", mas a Vercel compila as funcoes de api/ para CommonJS. Sem este arquivo, o .js emitido e interpretado como ESM e o Node quebra no carregamento com FUNCTION_INVOCATION_FAILED, antes de qualquer codigo rodar.",
+  "type": "commonjs"
+}

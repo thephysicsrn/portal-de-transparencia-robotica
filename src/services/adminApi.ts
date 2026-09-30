@@ -1,5 +1,15 @@
 import type { UserRole } from '../types'
 import { clientStorage } from './clientStorage'
+import {
+  isFirestoreReady,
+  getCurrentProfile,
+  fetchTeams,
+  fetchUsers,
+  adminApiBridge,
+  adminCreateTeam,
+  adminUpdateTeam,
+  adminDeleteTeam
+} from './firebase/store'
 
 const API_BASE = '/api'
 
@@ -82,7 +92,7 @@ async function withFallback<T>(backendCall: () => Promise<T>, localCall: () => P
   }
 }
 
-export const adminApi = {
+const localAdminApi = {
   login: async (email: string, password: string) => {
     return withFallback(
       () => request<{ token: string; user: any }>('/admin/login', {
@@ -172,3 +182,54 @@ export const adminApi = {
 }
 
 export type { UserRole }
+
+const firestoreAdminApi = {
+  // Com o Firebase, o login é o mesmo do portal: o AuthContext já abriu a
+  // sessão e o ID token acompanha cada chamada.
+  login: async () => {
+    const profile = getCurrentProfile()
+    if (!profile) throw new Error('Entre no portal antes de acessar o painel.')
+    return { token: localStorage.getItem('token'), user: profile }
+  },
+
+  getTeams: async () => {
+    return await fetchTeams()
+  },
+
+  getUsers: async () => {
+    return await fetchUsers()
+  },
+
+  // Criar e apagar contas exige o Admin SDK, então passa pela função serverless
+  createUser: async (payload: any) => {
+    return await adminApiBridge.createUser(payload)
+  },
+
+  updateUser: async (id: string, payload: any) => {
+    return await adminApiBridge.updateUser({ uid: id, ...payload })
+  },
+
+  deleteUser: async (id: string) => {
+    return await adminApiBridge.deleteUser({ uid: id })
+  },
+
+  createTeam: async (payload: any) => {
+    return await adminCreateTeam(payload)
+  },
+
+  updateTeam: async (id: string, payload: any) => {
+    return await adminUpdateTeam(id, payload)
+  },
+
+  deleteTeam: async (id: string) => {
+    return await adminDeleteTeam(id)
+  },
+
+  clearLocalData: () => {
+    localStorage.removeItem('admin_token')
+  }
+}
+
+export const adminApi: typeof localAdminApi = isFirestoreReady
+  ? (firestoreAdminApi as unknown as typeof localAdminApi)
+  : localAdminApi

@@ -13,7 +13,7 @@ import type {
 } from '../types'
 import { INITIAL_MOCK_DATA } from './mockData'
 
-const STORAGE_KEY = 'portal_robotica_prod_v1'
+const STORAGE_KEY = 'portal_robotica_prod_v2'
 
 interface ClientDbState {
   users: User[]

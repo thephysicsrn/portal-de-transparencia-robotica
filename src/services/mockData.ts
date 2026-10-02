@@ -95,13 +95,13 @@ export const INITIAL_MOCK_DATA: ClientDatabase = {
     },
     {
       id: "user-tech-lead",
-      name: "Profª Dra. Marina Guimarães",
-      email: "responsavel@robotica.org",
+      name: "Laysa Guimarães",
+      email: "gilmaraguimaraes@rn.sesi.org.br",
       passwordHash: "$2b$10$9rm2GXuP88cSc96lWFVGOei.3rDB0ehdu3ni2762g7ztlp0bsPIPW", // admin123
       role: "technical_lead",
       teamId: null,
       title: "Responsável Técnica & Supervisora Geral",
-      avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+      avatar: "",
       createdAt: "2026-01-01T08:00:00.000Z"
     },
     // BATLEGO

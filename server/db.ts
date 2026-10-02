@@ -151,6 +151,39 @@ function getDefaultDatabase(): DatabaseSchema {
       title: 'Aluno SparkBots 105',
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
       createdAt: '2026-02-02T10:00:00.000Z'
+    },
+    {
+      id: 'user-rep-titanium',
+      name: 'Representante Titanium 4022',
+      email: 'titanium@robotica.org',
+      passwordHash: bcrypt.hashSync('equipe123', salt),
+      role: 'team_coach',
+      teamId: 'team-1',
+      title: 'Representante Titanium 4022',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      createdAt: '2026-01-10T09:00:00.000Z'
+    },
+    {
+      id: 'user-rep-cybergears',
+      name: 'Representante CyberGears 810',
+      email: 'cybergears@robotica.org',
+      passwordHash: bcrypt.hashSync('equipe123', salt),
+      role: 'team_coach',
+      teamId: 'team-2',
+      title: 'Representante CyberGears 810',
+      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+      createdAt: '2026-01-15T09:00:00.000Z'
+    },
+    {
+      id: 'user-rep-sparkbots',
+      name: 'Representante SparkBots 105',
+      email: 'sparkbots@robotica.org',
+      passwordHash: bcrypt.hashSync('equipe123', salt),
+      role: 'team_coach',
+      teamId: 'team-3',
+      title: 'Representante SparkBots 105',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      createdAt: '2026-02-01T09:00:00.000Z'
     }
   ]
 

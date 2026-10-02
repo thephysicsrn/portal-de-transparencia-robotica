@@ -43,9 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [teams, setTeams] = useState<Team[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
-  // Firebase Auth é a fonte da verdade da sessão; o fallback local só entra
-  // quando o Firebase não está configurado
-  const [usingFirebase, setUsingFirebase] = useState(isFirestoreReady)
 
   const isSystemAdmin = user?.role === 'system_admin'
   const isTechnicalLead = user?.role === 'technical_lead'
@@ -58,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadTeams = async () => {
     try {
-      if (usingFirebase) {
+      if (isFirestoreReady) {
         setTeams(await fetchTeams())
         return
       }
@@ -75,7 +72,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isFirestoreReady) return
 
     let cancelled = false
-    setUsingFirebase(true)
 
     const unsubscribe = watchAuth(async firebaseUser => {
       try {

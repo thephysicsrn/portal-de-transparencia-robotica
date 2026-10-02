@@ -11,26 +11,34 @@ import { getFirestore, type Firestore } from 'firebase/firestore'
 //
 // Os valores podem ser sobrescritos por variaveis de ambiente VITE_FIREBASE_*,
 // o que evita deixar o arquivo como fonte unica em outros ambientes.
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAsqcLzCS-ni-H13LPq4u_UyahuEVzszw8',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'sesi-2e0fc.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'sesi-2e0fc',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'sesi-2e0fc.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '594607525814',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:594607525814:web:12e4a301f6516ead8afb17',
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://sesi-2e0fc-default-rtdb.firebaseio.com'
-}
+const apiKey = import.meta.env.VITE_FIREBASE_API_KEY
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID
 
-export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)
+// O Firebase só é ativado se as credenciais forem explicitamente configuradas via .env
+export const isFirebaseConfigured = Boolean(apiKey && projectId)
+
+const firebaseConfig = {
+  apiKey: apiKey || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: projectId || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || ''
+}
 
 let app: FirebaseApp | null = null
 let authInstance: Auth | null = null
 let dbInstance: Firestore | null = null
 
 if (isFirebaseConfigured) {
-  app = initializeApp(firebaseConfig)
-  authInstance = getAuth(app)
-  dbInstance = getFirestore(app)
+  try {
+    app = initializeApp(firebaseConfig)
+    authInstance = getAuth(app)
+    dbInstance = getFirestore(app)
+  } catch (err) {
+    console.warn('Falha ao inicializar Firebase SDK:', err)
+  }
 }
 
 export const firebaseApp = app

@@ -15,6 +15,8 @@ import {
   UserCheck,
   Crown,
   ChevronRight,
+
+  
   AlertTriangle,
   RefreshCw,
   Link2,
@@ -24,11 +26,12 @@ import {
   XCircle,
   LayoutDashboard
 } from 'lucide-react'
-import { adminApi } from '../services/adminApi'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AdminRole = 'system_admin' | 'technical_lead' | 'team_coach' | 'team_rep' | 'student'
+type AdminRole = 'technical_lead' | 'team_coach' | 'student'
 
 interface AdminTeam {
   id: string
@@ -40,12 +43,6 @@ interface AdminTeam {
   bankAccount: string
   leaderName: string
   createdAt: string
-  financialData?: {
-    sponsorshipsCount: number
-    expensesCount: number
-    purchaseRequestsCount: number
-    hasFinancialData: boolean
-  }
 }
 
 interface AdminUser {
@@ -62,37 +59,24 @@ interface AdminUser {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function roleLabel(role: AdminRole) {
-  if (role === 'system_admin') return 'Administrador de TI'
   if (role === 'technical_lead') return 'Responsável Técnica'
-  if (role === 'team_coach' || role === 'team_rep') return 'Técnico da Equipe'
+  if (role === 'team_coach') return 'Técnico da Equipe'
   return 'Aluno'
 }
 
 function roleColor(role: AdminRole) {
-  if (role === 'system_admin') return '#c4b5fd'
   if (role === 'technical_lead') return '#06b6d4'
-  if (role === 'team_coach' || role === 'team_rep') return '#10b981'
+  if (role === 'team_coach') return '#10b981'
   return '#6366f1'
-}
-
-function financialDataSummary(fd: AdminTeam['financialData']): string {
-  if (!fd || !fd.hasFinancialData) return ''
-  const parts: string[] = []
-  if (fd.sponsorshipsCount > 0) parts.push(`${fd.sponsorshipsCount} patrocínio${fd.sponsorshipsCount !== 1 ? 's' : ''}`)
-  if (fd.expensesCount > 0) parts.push(`${fd.expensesCount} despesa${fd.expensesCount !== 1 ? 's' : ''}`)
-  if (fd.purchaseRequestsCount > 0) parts.push(`${fd.purchaseRequestsCount} solicitação${fd.purchaseRequestsCount !== 1 ? 'ões' : ''}`)
-  return parts.join(', ')
 }
 
 function RoleBadge({ role }: { role: AdminRole }) {
   const colors: Record<AdminRole, { bg: string; text: string; icon: React.ReactNode }> = {
-    system_admin: { bg: 'rgba(167,139,250,0.12)', text: '#c4b5fd', icon: <ShieldCheck size={12} /> },
     technical_lead: { bg: 'rgba(6,182,212,0.12)', text: '#06b6d4', icon: <Crown size={12} /> },
     team_coach: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
-    team_rep: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
-    student: { bg: 'rgba(99,102,241,0.12)', text: '#a5b4fc', icon: <GraduationCap size={12} /> },
+    student: { bg: 'rgba(99,102,241,0.12)', text: '#818cf8', icon: <GraduationCap size={12} /> },
   }
-  const c = colors[role] || colors.student
+  const c = colors[role]
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -156,8 +140,8 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       padding: '20px'
     }} onClick={onClose}>
       <div style={{
-        background: '#0f172a',
-        border: '1px solid rgba(255,255,255,0.18)',
+        background: 'var(--bg-secondary, #0f172a)',
+        border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: 16,
         width: '100%',
         maxWidth: 560,
@@ -168,13 +152,13 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
       }} onClick={e => e.stopPropagation()}>
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.16)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between'
         }}>
-          <h3 style={{ color: '#f1f5f9', fontWeight: 700, fontSize: '1.05rem' }}>{title}</h3>
+          <h3 style={{ color: 'var(--text-main, #f1f5f9)', fontWeight: 700, fontSize: '1.05rem' }}>{title}</h3>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            color: '#a8b8cc', padding: 4, borderRadius: 6,
+            color: 'var(--text-muted, #94a3b8)', padding: 4, borderRadius: 6,
             display: 'flex', alignItems: 'center'
           }}>
             <X size={20} />
@@ -196,12 +180,12 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
           <div style={{ color: '#f59e0b', flexShrink: 0, marginTop: 2 }}><AlertTriangle size={22} /></div>
-          <p style={{ color: '#f1f5f9', lineHeight: 1.6, margin: 0 }}>{message}</p>
+          <p style={{ color: 'var(--text-main, #f1f5f9)', lineHeight: 1.6, margin: 0 }}>{message}</p>
         </div>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
           <button onClick={onCancel} style={{
-            padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
-            background: 'transparent', color: '#a8b8cc', cursor: 'pointer', fontWeight: 600
+            padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            background: 'transparent', color: 'var(--text-muted, #94a3b8)', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button onClick={onConfirm} style={{
             padding: '9px 20px', borderRadius: 8, border: 'none',
@@ -218,7 +202,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }: { message: string; onCo
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#a8b8cc', marginBottom: 6 }}>
+      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted, #94a3b8)', marginBottom: 6 }}>
         {label}{required && <span style={{ color: '#ef4444', marginLeft: 3 }}>*</span>}
       </label>
       {children}
@@ -230,24 +214,26 @@ const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px 14px',
   borderRadius: 8,
-  border: '1px solid rgba(255,255,255,0.20)',
-  background: 'rgba(255,255,255,0.06)',
-  color: '#f1f5f9',
+  border: '1px solid rgba(255,255,255,0.1)',
+  background: 'rgba(255,255,255,0.04)',
+  color: 'var(--text-main, #f1f5f9)',
   fontSize: '0.875rem',
   outline: 'none',
   boxSizing: 'border-box',
   transition: 'border-color 0.15s'
 }
 
-
 // ── Main Admin Panel ───────────────────────────────────────────────────────────
 
-interface AdminPanelProps {
+export interface AdminPanelProps {
+  token?: string
   adminUser: AdminUser
   onLogout: () => void
+  initialTab?: 'teams' | 'users' | 'overview'
 }
 
-export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: AdminPanelProps & { initialTab?: 'teams' | 'users' | 'overview' }) {
+export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview' }: AdminPanelProps) {
+  const authToken = token || localStorage.getItem('token') || ''
   const { toasts, show: toast } = useAdminToast()
   const [tab, setTab] = useState<'teams' | 'users' | 'overview'>(initialTab)
 
@@ -261,32 +247,33 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
   const [teamModal, setTeamModal] = useState<{ mode: 'create' | 'edit'; data?: AdminTeam } | null>(null)
   const [userModal, setUserModal] = useState<{ mode: 'create' | 'edit'; data?: AdminUser } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'team'; id: string; name: string } | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const headers = { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' }
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    setLoadError(null)
     try {
-      const [teamsData, usersData] = await Promise.all([
-        adminApi.getTeams(),
-        adminApi.getUsers()
+      const [teamsRes, usersRes] = await Promise.all([
+        fetch(`${API_BASE}/api/teams`, { headers }),
+        fetch(`${API_BASE}/api/admin/users`, { headers })
       ])
-      setTeams(teamsData)
-      setUsers(usersData)
+      if (!teamsRes.ok || !usersRes.ok) throw new Error('Falha ao carregar dados.')
+      setTeams(await teamsRes.json())
+      setUsers(await usersRes.json())
     } catch (err: any) {
-      setLoadError(err.message || 'Erro ao carregar dados.')
       toast(err.message || 'Erro ao carregar dados.', 'error')
     } finally {
       setLoading(false)
     }
-  }, [toast])
+  }, [authToken])
 
   useEffect(() => { loadData() }, [loadData])
 
   // ── Delete Handlers ──
   const handleDeleteUser = async (id: string) => {
     try {
-      await adminApi.deleteUser(id)
+      const res = await fetch(`${API_BASE}/api/admin/users/${id}`, { method: 'DELETE', headers })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Usuário excluído com sucesso.', 'success')
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch (err: any) { toast(err.message, 'error') }
@@ -294,7 +281,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
   const handleDeleteTeam = async (id: string) => {
     try {
-      await adminApi.deleteTeam(id)
+      const res = await fetch(`${API_BASE}/api/admin/teams/${id}`, { method: 'DELETE', headers })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
       toast('Equipe excluída com sucesso.', 'success')
       setTeams(prev => prev.filter(t => t.id !== id))
       setUsers(prev => prev.map(u => u.teamId === id ? { ...u, teamId: null, team: null } : u))
@@ -303,10 +291,9 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
   // ── Derived stats ──
   const totalUsers = users.length
-  const totalTechnicians = users.filter(u => u.role === 'team_coach' || u.role === 'team_rep').length
+  const totalTechnicians = users.filter(u => u.role === 'team_coach').length
   const totalStudents = users.filter(u => u.role === 'student').length
-  const totalSystemAdmins = users.filter(u => u.role === 'system_admin').length
-  const unlinkedUsers = users.filter(u => u.role !== 'system_admin' && u.role !== 'technical_lead' && !u.teamId).length
+  const unlinkedUsers = users.filter(u => u.role !== 'technical_lead' && !u.teamId).length
 
   const filteredUsers = users.filter(u =>
     u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
@@ -321,15 +308,13 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
   )
 
   return (
-    <div className="admin-panel" style={{ minHeight: '100vh', background: '#020617', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary, #020617)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <ToastContainer toasts={toasts} />
 
       {/* Confirm Dialog */}
       {confirmDelete && (
         <ConfirmDialog
-          message={confirmDelete.type === 'user'
-            ? `Tem certeza que deseja excluir o usuário "${confirmDelete.name}"? Esta ação é irreversível.`
-            : `Tem certeza que deseja excluir a equipe "${confirmDelete.name}"? Esta ação é irreversível.${users.some(u => u.teamId === confirmDelete.id) ? ' Os usuários vinculados ficarão sem equipe associada.' : ''}`}
+          message={`Tem certeza que deseja excluir ${confirmDelete.type === 'user' ? 'o usuário' : 'a equipe'} "${confirmDelete.name}"? Esta ação é irreversível.`}
           onConfirm={() => {
             if (confirmDelete.type === 'user') handleDeleteUser(confirmDelete.id)
             else handleDeleteTeam(confirmDelete.id)
@@ -344,16 +329,14 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
         <TeamFormModal
           mode={teamModal.mode}
           data={teamModal.data}
+          token={authToken}
           onClose={() => setTeamModal(null)}
           onSuccess={(team) => {
             if (teamModal.mode === 'create') {
-              setTeams(prev => [...prev, {
-                ...team,
-                financialData: { sponsorshipsCount: 0, expensesCount: 0, purchaseRequestsCount: 0, hasFinancialData: false }
-              }])
+              setTeams(prev => [...prev, team])
               toast(`Equipe "${team.name}" criada com sucesso!`, 'success')
             } else {
-              setTeams(prev => prev.map(t => t.id === team.id ? { ...t, ...team } : t))
+              setTeams(prev => prev.map(t => t.id === team.id ? team : t))
               toast(`Equipe "${team.name}" atualizada!`, 'success')
             }
             setTeamModal(null)
@@ -368,6 +351,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
           mode={userModal.mode}
           data={userModal.data}
           teams={teams}
+          token={authToken}
           onClose={() => setUserModal(null)}
           onSuccess={(user) => {
             if (userModal.mode === 'create') {
@@ -385,7 +369,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
       {/* Header */}
       <header style={{
-        borderBottom: '1px solid rgba(255,255,255,0.16)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
         background: 'rgba(15,23,42,0.95)',
         backdropFilter: 'blur(12px)',
         padding: '0 24px',
@@ -402,14 +386,14 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
             </div>
             <div>
               <div style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1rem', lineHeight: 1 }}>Painel Administrativo</div>
-              <div style={{ color: '#a8b8cc', fontSize: '0.72rem', marginTop: 2 }}>Portal de Transparência da Robótica</div>
+              <div style={{ color: '#64748b', fontSize: '0.72rem', marginTop: 2 }}>Portal de Transparência da Robótica</div>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}>{adminUser.name}</div>
-              <div style={{ color: roleColor(adminUser.role), fontSize: '0.72rem', fontWeight: 600 }}>{roleLabel(adminUser.role)}</div>
+              <div style={{ color: '#06b6d4', fontSize: '0.72rem', fontWeight: 600 }}>Responsável Técnica</div>
             </div>
             <button
               onClick={onLogout}
@@ -429,7 +413,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
         {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 28, borderBottom: '1px solid rgba(255,255,255,0.16)', paddingBottom: 0 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 28, borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 0 }}>
           {([
             { key: 'overview', label: 'Visão Geral', icon: <LayoutDashboard size={16} /> },
             { key: 'teams', label: 'Equipes', icon: <UsersRound size={16} /> },
@@ -443,7 +427,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 padding: '10px 18px',
                 border: 'none', borderRadius: '8px 8px 0 0',
                 background: tab === t.key ? 'rgba(6,182,212,0.1)' : 'transparent',
-                color: tab === t.key ? '#06b6d4' : '#a8b8cc',
+                color: tab === t.key ? '#06b6d4' : '#64748b',
                 fontWeight: tab === t.key ? 700 : 500,
                 fontSize: '0.875rem',
                 cursor: 'pointer',
@@ -458,8 +442,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
             onClick={loadData}
             style={{
               marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 7,
-              padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.16)',
-              background: 'transparent', color: '#a8b8cc', cursor: 'pointer', fontSize: '0.8125rem',
+              padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.07)',
+              background: 'transparent', color: '#64748b', cursor: 'pointer', fontSize: '0.8125rem',
               marginBottom: 2
             }}
           >
@@ -467,19 +451,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
           </button>
         </div>
 
-        {loadError && (
-          <div style={{
-            marginBottom: 20, padding: '14px 18px', borderRadius: 10,
-            background: 'rgba(239,68,68,0.08)',
-            border: '1px solid rgba(239,68,68,0.25)',
-            color: '#fca5a5', fontSize: '0.85rem', fontWeight: 600
-          }}>
-            Falha ao carregar os dados do painel: {loadError}
-          </div>
-        )}
-
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 60, color: '#a8b8cc' }}>Carregando dados...</div>
+          <div style={{ textAlign: 'center', padding: 60, color: '#64748b' }}>Carregando dados...</div>
         ) : (
           <>
             {/* ── OVERVIEW TAB ── */}
@@ -493,38 +466,37 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     { label: 'Equipes', value: teams.length, color: '#06b6d4', icon: <UsersRound size={22} /> },
                     { label: 'Total de Usuários', value: totalUsers, color: '#3b82f6', icon: <Users size={22} /> },
                     { label: 'Técnicos', value: totalTechnicians, color: '#10b981', icon: <UserCheck size={22} /> },
-                    { label: 'Alunos', value: totalStudents, color: '#a5b4fc', icon: <GraduationCap size={22} /> },
+                    { label: 'Alunos', value: totalStudents, color: '#818cf8', icon: <GraduationCap size={22} /> },
                     { label: 'Sem Equipe', value: unlinkedUsers, color: '#f59e0b', icon: <Link2 size={22} /> },
-                    { label: 'Admins de TI', value: totalSystemAdmins, color: '#c4b5fd', icon: <ShieldCheck size={22} /> },
                   ].map(s => (
                     <div key={s.label} style={{
                       background: 'rgba(15,23,42,0.8)',
-                      border: '1px solid rgba(255,255,255,0.16)',
+                      border: '1px solid rgba(255,255,255,0.06)',
                       borderRadius: 12, padding: '20px',
                       display: 'flex', alignItems: 'center', gap: 14
                     }}>
                       <div style={{ color: s.color }}>{s.icon}</div>
                       <div>
                         <div style={{ fontSize: '1.75rem', fontWeight: 800, color: s.color, lineHeight: 1 }}>{s.value}</div>
-                        <div style={{ color: '#a8b8cc', fontSize: '0.8rem', marginTop: 4 }}>{s.label}</div>
+                        <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: 4 }}>{s.label}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Teams overview cards */}
-                <h3 style={{ color: '#cbd5e1', fontWeight: 700, marginBottom: 14, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 style={{ color: '#94a3b8', fontWeight: 700, marginBottom: 14, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   Equipes e Membros
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {teams.map(team => {
                     const teamUsers = users.filter(u => u.teamId === team.id)
-                    const coaches = teamUsers.filter(u => u.role === 'team_coach' || u.role === 'team_rep')
+                    const coaches = teamUsers.filter(u => u.role === 'team_coach')
                     const students = teamUsers.filter(u => u.role === 'student')
                     return (
                       <div key={team.id} style={{
                         background: 'rgba(15,23,42,0.7)',
-                        border: '1px solid rgba(255,255,255,0.16)',
+                        border: '1px solid rgba(255,255,255,0.06)',
                         borderRadius: 12, padding: '18px 20px',
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -540,13 +512,13 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 background: 'rgba(6,182,212,0.1)', padding: '2px 8px', borderRadius: 20, fontWeight: 700
                               }}>{team.code}</span>
                             </div>
-                            <div style={{ color: '#a8b8cc', fontSize: '0.78rem', marginTop: 4, marginLeft: 18 }}>{team.category}</div>
+                            <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 4, marginLeft: 18 }}>{team.category}</div>
                           </div>
                           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                             <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
                               <UserCheck size={14} />{coaches.length} Técnico{coaches.length !== 1 ? 's' : ''}
                             </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#a5b4fc', fontSize: '0.8rem', fontWeight: 600 }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#818cf8', fontSize: '0.8rem', fontWeight: 600 }}>
                               <GraduationCap size={14} />{students.length} Aluno{students.length !== 1 ? 's' : ''}
                             </span>
                           </div>
@@ -568,11 +540,11 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 display: 'flex', alignItems: 'center', gap: 6,
                                 padding: '4px 10px', borderRadius: 20,
                                 background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.16)'
+                                border: '1px solid rgba(255,255,255,0.06)'
                               }}>
                                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: roleColor(u.role) }} />
                                 <span style={{ color: '#cbd5e1', fontSize: '0.775rem', fontWeight: 600 }}>{u.name}</span>
-                                <span style={{ color: '#b6c4d6', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
+                                <span style={{ color: '#475569', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
                               </div>
                             ))}
                           </div>
@@ -581,7 +553,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     )
                   })}
                   {teams.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 40, color: '#b6c4d6' }}>
+                    <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>
                       Nenhuma equipe cadastrada. <button onClick={() => { setTab('teams'); setTeamModal({ mode: 'create' }) }} style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', fontWeight: 700, textDecoration: 'underline' }}>Criar equipe</button>
                     </div>
                   )}
@@ -611,7 +583,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
                 {/* Search */}
                 <div style={{ position: 'relative', marginBottom: 16 }}>
-                  <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b6c4d6' }} />
+                  <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                   <input
                     type="text"
                     placeholder="Buscar equipes..."
@@ -624,14 +596,12 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {filteredTeams.map(team => {
                     const teamUsers = users.filter(u => u.teamId === team.id)
-                    const coaches = teamUsers.filter(u => u.role === 'team_coach' || u.role === 'team_rep')
+                    const coaches = teamUsers.filter(u => u.role === 'team_coach')
                     const students = teamUsers.filter(u => u.role === 'student')
-                    const fd = team.financialData
-                    const hasData = fd?.hasFinancialData ?? false
                     return (
                       <div key={team.id} style={{
                         background: 'rgba(15,23,42,0.8)',
-                        border: '1px solid rgba(255,255,255,0.16)',
+                        border: '1px solid rgba(255,255,255,0.07)',
                         borderRadius: 12, padding: '20px',
                         transition: 'border-color 0.15s'
                       }}>
@@ -644,19 +614,19 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 {team.code}
                               </span>
                             </div>
-                            <div style={{ color: '#a8b8cc', fontSize: '0.8rem', marginBottom: 8 }}>{team.category} · {team.institution || 'Instituição não informada'}</div>
+                            <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: 8 }}>{team.category} · {team.institution || 'Instituição não informada'}</div>
                             {team.description && (
-                              <div style={{ color: '#cbd5e1', fontSize: '0.8rem', marginBottom: 10 }}>{team.description}</div>
+                              <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: 10 }}>{team.description}</div>
                             )}
                             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                               <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <UserCheck size={13} /> {coaches.length} Técnico{coaches.length !== 1 ? 's' : ''}
                               </span>
-                              <span style={{ color: '#a5b4fc', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <span style={{ color: '#818cf8', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <GraduationCap size={13} /> {students.length} Aluno{students.length !== 1 ? 's' : ''}
                               </span>
                               {team.leaderName && (
-                                <span style={{ color: '#a8b8cc', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <span style={{ color: '#64748b', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
                                   <Crown size={12} color="#f59e0b" /> {team.leaderName}
                                 </span>
                               )}
@@ -666,51 +636,30 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                             <button
                               onClick={() => setTeamModal({ mode: 'edit', data: team })}
                               style={{
-                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.18)',
-                                background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', cursor: 'pointer',
+                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)',
+                                background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 600
                               }}
                             >
                               <Pencil size={14} /> Editar
                             </button>
                             <button
-                              onClick={() => hasData
-                                ? toast(`"${team.name}" não pode ser excluída: possui ${financialDataSummary(fd)} registrado(s). Exclua os dados financeiros antes.`, 'error')
-                                : setConfirmDelete({ type: 'team', id: team.id, name: team.name })}
-                              title={hasData ? `Bloqueado: ${financialDataSummary(fd)} registrado(s)` : 'Excluir equipe'}
+                              onClick={() => setConfirmDelete({ type: 'team', id: team.id, name: team.name })}
                               style={{
-                                padding: '7px 12px', borderRadius: 8,
-                                border: hasData ? '1px solid rgba(255,255,255,0.16)' : '1px solid rgba(239,68,68,0.15)',
-                                background: hasData ? 'rgba(255,255,255,0.02)' : 'rgba(239,68,68,0.06)',
-                                color: hasData ? '#b6c4d6' : '#f87171', cursor: 'pointer',
+                                padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.15)',
+                                background: 'rgba(239,68,68,0.06)', color: '#f87171', cursor: 'pointer',
                                 display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.8rem', fontWeight: 600
                               }}
                             >
-                              <Trash2 size={14} /> Apagar
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
 
-                        {hasData && (
-                          <div style={{
-                            marginTop: 12, padding: '10px 14px',
-                            background: 'rgba(245,158,11,0.07)',
-                            border: '1px solid rgba(245,158,11,0.2)',
-                            borderRadius: 8,
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            fontSize: '0.775rem', color: '#fbbf24'
-                          }}>
-                            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
-                            <span>
-                              Exclusão bloqueada: há {financialDataSummary(fd)} registrado(s). Remova os dados financeiros para liberar a exclusão da equipe.
-                            </span>
-                          </div>
-                        )}
-
                         {/* Members preview */}
                         {teamUsers.length > 0 && (
                           <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#b6c4d6', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Membros</div>
+                            <div style={{ color: '#475569', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Membros</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                               {teamUsers.map(u => (
                                 <div key={u.id} style={{
@@ -721,7 +670,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                                 }}>
                                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: roleColor(u.role) }} />
                                   <span style={{ color: '#cbd5e1', fontSize: '0.775rem', fontWeight: 600 }}>{u.name}</span>
-                                  <span style={{ color: '#b6c4d6', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
+                                  <span style={{ color: '#475569', fontSize: '0.7rem' }}>· {roleLabel(u.role)}</span>
                                 </div>
                               ))}
                             </div>
@@ -731,7 +680,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     )
                   })}
                   {filteredTeams.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 50, color: '#b6c4d6', fontSize: '0.9rem' }}>
+                    <div style={{ textAlign: 'center', padding: 50, color: '#475569', fontSize: '0.9rem' }}>
                       {searchTeam ? 'Nenhuma equipe encontrada.' : 'Nenhuma equipe cadastrada ainda.'}
                     </div>
                   )}
@@ -762,7 +711,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 {/* Role filter chips */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
-                    <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#b6c4d6' }} />
+                    <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
                     <input
                       type="text"
                       placeholder="Buscar usuários..."
@@ -774,14 +723,14 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                 </div>
 
                 {/* Users table */}
-                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 12, overflow: 'hidden' }}>
+                <div style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, overflow: 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.02)' }}>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                         {['Nome', 'E-mail', 'Papel', 'Equipe', 'Ações'].map(h => (
                           <th key={h} style={{
                             padding: '12px 16px', textAlign: 'left',
-                            color: '#b6c4d6', fontSize: '0.75rem', fontWeight: 700,
+                            color: '#475569', fontSize: '0.75rem', fontWeight: 700,
                             textTransform: 'uppercase', letterSpacing: '0.05em'
                           }}>{h}</th>
                         ))}
@@ -795,16 +744,16 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                         }}>
                           <td style={{ padding: '14px 16px' }}>
                             <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: '0.875rem' }}>{u.name}</div>
-                            {u.title && <div style={{ color: '#b6c4d6', fontSize: '0.72rem', marginTop: 2 }}>{u.title}</div>}
+                            {u.title && <div style={{ color: '#475569', fontSize: '0.72rem', marginTop: 2 }}>{u.title}</div>}
                           </td>
-                          <td style={{ padding: '14px 16px', color: '#a8b8cc', fontSize: '0.825rem' }}>{u.email}</td>
+                          <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '0.825rem' }}>{u.email}</td>
                           <td style={{ padding: '14px 16px' }}><RoleBadge role={u.role} /></td>
                           <td style={{ padding: '14px 16px' }}>
                             {u.team ? (
                               <span style={{ color: '#06b6d4', fontSize: '0.8rem', fontWeight: 600 }}>{u.team.name}</span>
                             ) : (
                               <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>
-                                {(u.role === 'technical_lead' || u.role === 'system_admin') ? '—' : 'Sem equipe'}
+                                {u.role === 'technical_lead' ? '—' : 'Sem equipe'}
                               </span>
                             )}
                           </td>
@@ -813,8 +762,8 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                               <button
                                 onClick={() => setUserModal({ mode: 'edit', data: u })}
                                 style={{
-                                  padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.18)',
-                                  background: 'rgba(255,255,255,0.04)', color: '#cbd5e1', cursor: 'pointer',
+                                  padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.08)',
+                                  background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer',
                                   display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.775rem', fontWeight: 600
                                 }}
                               >
@@ -823,15 +772,13 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                               {u.id !== adminUser.id && (
                                 <button
                                   onClick={() => setConfirmDelete({ type: 'user', id: u.id, name: u.name })}
-                                  title="Apagar usuário"
-                                  aria-label={`Apagar usuário ${u.name}`}
                                   style={{
                                     padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.15)',
                                     background: 'rgba(239,68,68,0.06)', color: '#f87171', cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.775rem', fontWeight: 600
                                   }}
                                 >
-                                  <Trash2 size={12} /> Apagar
+                                  <Trash2 size={12} />
                                 </button>
                               )}
                             </div>
@@ -841,7 +788,7 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
                     </tbody>
                   </table>
                   {filteredUsers.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: 40, color: '#b6c4d6' }}>
+                    <div style={{ textAlign: 'center', padding: 40, color: '#475569' }}>
                       {searchUser ? 'Nenhum usuário encontrado.' : 'Nenhum usuário cadastrado.'}
                     </div>
                   )}
@@ -857,9 +804,10 @@ export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: Adm
 
 // ── Team Form Modal ────────────────────────────────────────────────────────────
 
-function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
+function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminTeam
+  token: string
   onClose: () => void
   onSuccess: (team: AdminTeam) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -885,10 +833,14 @@ function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
     }
     setSaving(true)
     try {
-      const saved = mode === 'create'
-        ? await adminApi.createTeam(form)
-        : await adminApi.updateTeam(data!.id, form)
-      onSuccess(saved)
+      const url = mode === 'create' ? `${API_BASE}/api/teams` : `${API_BASE}/api/admin/teams/${data!.id}`
+      const method = mode === 'create' ? 'POST' : 'PUT'
+      const res = await fetch(url, {
+        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      onSuccess(await res.json())
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
@@ -935,8 +887,8 @@ function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
           <button type="button" onClick={onClose} style={{
-            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
-            background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontWeight: 600
+            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button type="submit" disabled={saving} style={{
             padding: '10px 24px', borderRadius: 8, border: 'none',
@@ -954,10 +906,11 @@ function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
 
 // ── User Form Modal ────────────────────────────────────────────────────────────
 
-function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
+function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminUser
   teams: AdminTeam[]
+  token: string
   onClose: () => void
   onSuccess: (user: AdminUser) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -988,10 +941,14 @@ function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
     if (form.password) body.password = form.password
 
     try {
-      const saved = mode === 'create'
-        ? await adminApi.createUser(body)
-        : await adminApi.updateUser(data!.id, body)
-      onSuccess(saved)
+      const url = mode === 'create' ? `${API_BASE}/api/admin/users` : `${API_BASE}/api/admin/users/${data!.id}`
+      const method = mode === 'create' ? 'POST' : 'PUT'
+      const res = await fetch(url, {
+        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      onSuccess(await res.json())
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
@@ -1018,15 +975,14 @@ function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
             />
             <button type="button" onClick={() => setShowPass(p => !p)} style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer', color: '#a8b8cc', display: 'flex'
+              background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex'
             }}>
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
         </Field>
         <Field label="Papel / Função" required>
-          <select style={{ ...inputStyle }} value={form.role} onChange={e => { set('role', e.target.value); if (e.target.value === 'system_admin' || e.target.value === 'technical_lead') set('teamId', '') }} required>
-            <option value="system_admin">Administrador de TI (Acesso Total)</option>
+          <select style={{ ...inputStyle }} value={form.role} onChange={e => { set('role', e.target.value); if (e.target.value === 'technical_lead') set('teamId', '') }} required>
             <option value="technical_lead">Responsável Técnica (Supervisão Geral)</option>
             <option value="team_coach">Técnico da Equipe (Aprovação de Compras)</option>
             <option value="student">Aluno (Solicitação de Compras)</option>
@@ -1048,8 +1004,8 @@ function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
           <button type="button" onClick={onClose} style={{
-            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.20)',
-            background: 'transparent', color: '#cbd5e1', cursor: 'pointer', fontWeight: 600
+            padding: '10px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)',
+            background: 'transparent', color: '#94a3b8', cursor: 'pointer', fontWeight: 600
           }}>Cancelar</button>
           <button type="submit" disabled={saving} style={{
             padding: '10px 24px', borderRadius: 8, border: 'none',
@@ -1079,20 +1035,26 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
     setError('')
     setLoading(true)
     try {
-      const data = await adminApi.login(email, password)
+      const res = await fetch(`${API_BASE}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Falha ao autenticar.')
       onSuccess(data.token, data.user)
     } catch (err: any) {
-      setError(err.message || 'Falha ao autenticar.')
+      setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="admin-panel" style={{
+    <div style={{
       minHeight: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#020617',
+      background: 'var(--bg-primary, #020617)',
       padding: 24,
       fontFamily: "'Inter', -apple-system, sans-serif"
     }}>
@@ -1111,21 +1073,21 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           <h1 style={{ color: '#f1f5f9', fontWeight: 800, fontSize: '1.5rem', marginBottom: 8 }}>
             Painel Administrativo
           </h1>
-          <p style={{ color: '#a8b8cc', fontSize: '0.875rem' }}>
-            Acesso restrito à Responsável Técnica e ao Administrador de TI
+          <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
+            Acesso restrito à Responsável Técnica
           </p>
         </div>
 
         {/* Card */}
         <div style={{
           background: 'rgba(15,23,42,0.9)',
-          border: '1px solid rgba(255,255,255,0.18)',
+          border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 16,
           padding: '32px',
           boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
         }}>
           <form onSubmit={handleLogin}>
-            <Field label="E-mail institucional" required>
+            <Field label="E-mail da Responsável Técnica" required>
               <input
                 type="email"
                 style={inputStyle}
@@ -1149,7 +1111,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
                 />
                 <button type="button" onClick={() => setShowPass(p => !p)} style={{
                   position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#a8b8cc', display: 'flex'
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex'
                 }}>
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -1186,33 +1148,17 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           </form>
 
           <div style={{
-            marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.16)',
-            textAlign: 'center', color: '#b6c4d6', fontSize: '0.775rem'
+            marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.06)',
+            textAlign: 'center', color: '#475569', fontSize: '0.775rem'
           }}>
             Este painel é exclusivo para gerenciamento de equipes e usuários do sistema.
           </div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 20 }}>
-          <a href="/" style={{ color: '#b6c4d6', fontSize: '0.8rem', textDecoration: 'none' }}>
+          <a href="/" style={{ color: '#475569', fontSize: '0.8rem', textDecoration: 'none' }}>
             ← Voltar para o Portal
           </a>
-          <div style={{ marginTop: 14 }}>
-            <button
-              type="button"
-              onClick={() => {
-                if (!window.confirm('Isso apaga os dados salvos neste navegador (equipes, usuários e lançamentos) e recarrega a página. O servidor não é afetado. Continuar?')) return
-                adminApi.clearLocalData()
-                window.location.reload()
-              }}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                color: '#a8b8cc', fontSize: '0.75rem', textDecoration: 'underline'
-              }}
-            >
-              Painel não carrega? Limpar dados deste navegador
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -1246,5 +1192,5 @@ export function AdminView() {
     return <AdminLogin onSuccess={handleLoginSuccess} />
   }
 
-  return <AdminPanel adminUser={adminUser} onLogout={handleLogout} />
+  return <AdminPanel token={token} adminUser={adminUser} onLogout={handleLogout} />
 }

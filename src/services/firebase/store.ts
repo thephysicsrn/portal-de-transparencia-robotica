@@ -15,7 +15,7 @@ import {
   writeBatch
 } from 'firebase/firestore'
 
-import { auth, db } from './config'
+import { auth, db, isFirebaseConfigured } from './config'
 import { buildDashboardMetrics, buildStatement, computeTeamFinancialSummary } from './finance'
 import type {
   AuditLog,
@@ -38,7 +38,7 @@ const COLLECTIONS = {
   auditLogs: 'auditLogs'
 } as const
 
-export const isFirestoreReady = Boolean(db && auth)
+export const isFirestoreReady = Boolean(isFirebaseConfigured && db && auth)
 
 const newId = (prefix: string) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`

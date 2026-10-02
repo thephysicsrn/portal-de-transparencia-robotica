@@ -44,15 +44,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers
     })
 
-    if (!response.ok) {
-      if ([404, 405, 502, 503].includes(response.status)) {
-        isBackendAvailable = false
-        throw new Error('BACKEND_UNAVAILABLE')
-      }
-      const data = await response.json().catch(() => ({}))
-      throw new ApiError(data.error || 'Ocorreu um erro na requisição.', response.status)
-    }
-
     const contentType = response.headers.get('content-type')
     if (contentType && contentType.includes('text/html')) {
       isBackendAvailable = false
@@ -65,6 +56,17 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         localStorage.removeItem('user')
         window.dispatchEvent(new Event('auth:unauthorized'))
       }
+      const data = await response.json().catch(() => ({}))
+      throw new ApiError(data.error || 'Credenciais inválidas ou sessão expirada.', 401)
+    }
+
+    if (!response.ok) {
+      if ([502, 503, 504].includes(response.status)) {
+        isBackendAvailable = false
+        throw new Error('BACKEND_UNAVAILABLE')
+      }
+      const data = await response.json().catch(() => ({}))
+      throw new ApiError(data.error || 'Ocorreu um erro na requisição.', response.status)
     }
 
     const data = await response.json().catch(() => ({}))
@@ -97,8 +99,11 @@ const localApi = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
       })
-    } catch {
-      return await clientStorage.login(credentials)
+    } catch (err: any) {
+      if (err.message === 'BACKEND_UNAVAILABLE') {
+        return await clientStorage.login(credentials)
+      }
+      throw err
     }
   },
 

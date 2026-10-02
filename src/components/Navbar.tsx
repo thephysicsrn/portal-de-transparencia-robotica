@@ -9,7 +9,6 @@ import {
   History,
   Users,
   LogOut,
-  RotateCcw,
   ShieldCheck,
   UserCheck,
   GraduationCap,
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from './Toast'
-import { api } from '../services/api'
 
 interface NavbarProps {
   currentTab: string
@@ -28,18 +26,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDataRefreshNeeded }) => {
   const { user, logout, selectedTeamId, setSelectedTeamId, teams, hasGlobalAccess, isCoach, isStudent } = useAuth()
-  const { showToast } = useToast()
-
-  const handleResetDemo = async () => {
-    if (!confirm('Deseja reinicializar a base de dados mantendo o estado limpo?')) return
-    try {
-      await api.resetDemoData()
-      showToast('Base de dados limpa com sucesso!', 'success')
-      onDataRefreshNeeded()
-    } catch (err: any) {
-      showToast(err.message || 'Erro ao reinicializar dados.', 'error')
-    }
-  }
+  const { showToast: _showToast } = useToast()
 
   const navItems = [
     {
@@ -137,18 +124,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
                 </span>
               </div>
             </div>
-
-            {/* Quick Demo Reset for Admin */}
-            {hasGlobalAccess && (
-              <button
-                className="btn btn-secondary btn-icon btn-sm"
-                title="Restaurar dados de teste demonstrativos"
-                onClick={handleResetDemo}
-                aria-label="Restaurar dados de teste"
-              >
-                <RotateCcw size={15} />
-              </button>
-            )}
 
             {/* Logout */}
             <button

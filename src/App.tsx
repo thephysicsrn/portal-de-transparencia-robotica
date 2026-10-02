@@ -12,7 +12,7 @@ import { AuditHistoryView } from './components/AuditHistoryView'
 import { TeamsManagementView } from './components/TeamsManagementView'
 import { AdminView, AdminPanel } from './components/AdminView'
 import type { PurchaseRequest } from './types'
-import { Info, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import './App.css'
 
 // Check if we are on the /admin route (tolerates trailing slashes and casing)
@@ -83,19 +83,6 @@ const AppMain: React.FC = () => {
 
       {/* Main Viewport */}
       <main className="main-content">
-        {/* Environment status banner */}
-        <div className="demo-banner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Info size={18} color="var(--accent-cyan)" />
-            <span>
-              <strong>Base Pronta para Dados Originais:</strong> Dados fictícios removidos. Fluxo ativo com <em>Painel do Aluno</em> (solicitações), <em>Painel do Técnico</em> (aprovações de compras) e <em>Supervisão Geral</em> pela Responsável Técnica.
-            </span>
-          </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent-emerald)', whiteSpace: 'nowrap', fontWeight: 600 }}>
-            ● Sistema em Operação
-          </span>
-        </div>
-
         {/* Tab Views */}
         {currentTab === 'dashboard' && (
           <DashboardView

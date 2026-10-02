@@ -1,37 +1,70 @@
 {
   "teams": [
     {
-      "id": "team-1",
-      "name": "Titanium 4022",
-      "code": "TITAN-4022",
-      "category": "FRC - FIRST Robotics Competition",
-      "institution": "Centro de Tecnologia e Inovação SESI/SENAI",
-      "description": "Equipe de robótica competitiva categoria avançada FRC de 50kg.",
-      "bankAccount": "Banco do Brasil - Ag: 1234-5 | CC: 98765-4 (PIX: financeiro@titanium4022.org)",
-      "leaderName": "Prof. Lucas Rocha",
-      "createdAt": "2026-01-10T10:00:00.000Z"
-    },
-    {
-      "id": "team-2",
-      "name": "CyberGears 810",
-      "code": "CYBER-810",
-      "category": "FTC - FIRST Tech Challenge",
-      "institution": "Instituto Federal de Educação Tecnológica",
-      "description": "Desenvolvimento de robôs móveis autônomos e teleoperados com visão computacional.",
-      "bankAccount": "Caixa Econômica - Ag: 4321 | CC: 56789-0 (PIX: rep@cybergears.edu.br)",
-      "leaderName": "Marina Duarte",
-      "createdAt": "2026-01-15T14:30:00.000Z"
-    },
-    {
-      "id": "team-3",
-      "name": "SparkBots 105",
-      "code": "SPARK-105",
+      "id": "team-batlego",
+      "name": "BATLEGO",
+      "code": "BAT-FLL",
       "category": "FLL - FIRST Lego League",
-      "institution": "Escola SESI de Educação Básica",
-      "description": "Iniciação científica e robótica educacional para jovens talentos.",
-      "bankAccount": "Bradesco - Ag: 0987 | CC: 12345-6 (PIX: sparkbots@fiern.org.br)",
-      "leaderName": "Renato Sales",
-      "createdAt": "2026-02-01T09:00:00.000Z"
+      "institution": "SESI RN",
+      "description": "Equipe de robótica da categoria FLL (FIRST Lego League) do SESI RN.",
+      "bankAccount": "SESI RN / BATLEGO",
+      "leaderName": "Mateus Zeca Bezerra da Silva",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "team-guarani",
+      "name": "GUARANI",
+      "code": "GUA-FLL",
+      "category": "FLL - FIRST Lego League",
+      "institution": "SESI RN",
+      "description": "Equipe de robótica da categoria FLL (FIRST Lego League) do SESI RN.",
+      "bankAccount": "SESI RN / GUARANI",
+      "leaderName": "Sheyla de Paula Cardoso",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "team-carcara-lux",
+      "name": "CARCARÁ LUX",
+      "code": "CAR-SR",
+      "category": "STEAM RACING",
+      "institution": "SESI RN",
+      "description": "Equipe de robótica e automobilismo educacional categoria STEAM RACING.",
+      "bankAccount": "SESI RN / CARCARÁ LUX",
+      "leaderName": "Zania Christina Feitosa Lobo Gomes",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "team-p0t1bat",
+      "name": "P0T1BAT",
+      "code": "POT-FRC",
+      "category": "FRC - FIRST Robotics Competition",
+      "institution": "SESI RN",
+      "description": "Equipe avançada de robótica industrial competitiva FRC de 50kg.",
+      "bankAccount": "SESI RN / P0T1BAT",
+      "leaderName": "Terciano Fonseca de Souza",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "team-jovens-punares",
+      "name": "JOVENS PUNARÉS",
+      "code": "PUN-FLL",
+      "category": "FLL - FIRST Lego League",
+      "institution": "SESI RN",
+      "description": "Equipe de robótica da categoria FLL (FIRST Lego League) do SESI RN.",
+      "bankAccount": "SESI RN / JOVENS PUNARÉS",
+      "leaderName": "Paulo Cesar Palhares de Lima",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "team-techno-sertao",
+      "name": "TECHNO SERTÃO",
+      "code": "TEC-FLL",
+      "category": "FLL - FIRST Lego League",
+      "institution": "SESI RN",
+      "description": "Equipe de robótica da categoria FLL (FIRST Lego League) do SESI RN.",
+      "bankAccount": "SESI RN / TECHNO SERTÃO",
+      "leaderName": "Micael Silva dos Santos",
+      "createdAt": "2026-02-01T10:00:00.000Z"
     }
   ],
   "users": [
@@ -39,7 +72,7 @@
       "id": "user-tech-lead",
       "name": "Profª Dra. Marina Guimarães",
       "email": "responsavel@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2e3gykaUSJpkrwgVwx8aJTHFnFppa7.rq",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIO4kryHl7TwGL6l.JSmMvGGVhOoFjwisC",
       "role": "technical_lead",
       "teamId": null,
       "title": "Responsável Técnica & Supervisora Geral",
@@ -47,76 +80,10 @@
       "createdAt": "2026-01-01T08:00:00.000Z"
     },
     {
-      "id": "user-coach-titanium",
-      "name": "Prof. Lucas Rocha",
-      "email": "tecnico@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eTLJBEPSFBZGl8JnlgefTAbWK637Rj6K",
-      "role": "team_coach",
-      "teamId": "team-1",
-      "title": "Técnico / Mentor Titanium 4022",
-      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-10T09:00:00.000Z"
-    },
-    {
-      "id": "user-student-titanium",
-      "name": "Gabriel Menezes",
-      "email": "aluno@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eHCcZsgTmrkVINRtUUQBquGDxoxp6ypS",
-      "role": "student",
-      "teamId": "team-1",
-      "title": "Aluno & Solicitante Titanium 4022",
-      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-11T11:00:00.000Z"
-    },
-    {
-      "id": "user-coach-cybergears",
-      "name": "Marina Duarte",
-      "email": "tecnico.cybergears@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eTLJBEPSFBZGl8JnlgefTAbWK637Rj6K",
-      "role": "team_coach",
-      "teamId": "team-2",
-      "title": "Técnica CyberGears 810",
-      "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-15T09:00:00.000Z"
-    },
-    {
-      "id": "user-student-cybergears",
-      "name": "Beatriz Vasconcelos",
-      "email": "aluno.cybergears@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eHCcZsgTmrkVINRtUUQBquGDxoxp6ypS",
-      "role": "student",
-      "teamId": "team-2",
-      "title": "Aluna CyberGears 810",
-      "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-16T15:00:00.000Z"
-    },
-    {
-      "id": "user-coach-sparkbots",
-      "name": "Renato Sales",
-      "email": "tecnico.sparkbots@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eTLJBEPSFBZGl8JnlgefTAbWK637Rj6K",
-      "role": "team_coach",
-      "teamId": "team-3",
-      "title": "Técnico SparkBots 105",
-      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-02-01T09:00:00.000Z"
-    },
-    {
-      "id": "user-student-sparkbots",
-      "name": "Felipe Alencar",
-      "email": "aluno.sparkbots@robotica.org",
-      "passwordHash": "$2b$10$zSWNvmuFK53aQYkQyBAo2eHCcZsgTmrkVINRtUUQBquGDxoxp6ypS",
-      "role": "student",
-      "teamId": "team-3",
-      "title": "Aluno SparkBots 105",
-      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-02-02T10:00:00.000Z"
-    },
-    {
       "id": "user-system-admin",
       "name": "Administrador de TI",
       "email": "ti@robotica.org",
-      "passwordHash": "$2b$10$cdn2avLDWtlOxpzbGXwHhO2m12CT3wy.7VA0lPKxcAbJBNYQqJWCa",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOYTUywd7eVgzWtGgQYUzViQNuGsxHpAW",
       "role": "system_admin",
       "teamId": null,
       "title": "Administrador do Sistema & TI",
@@ -124,37 +91,136 @@
       "createdAt": "2026-01-01T07:00:00.000Z"
     },
     {
-      "id": "user-rep-titanium",
-      "name": "Representante Titanium 4022",
-      "email": "titanium@robotica.org",
-      "passwordHash": "$2b$10$Q3cRSYXUQd6b.RXiVk5dCuqPlevS6CsOAzeZ3G/D6KwHXIWoYXfsa",
+      "id": "user-coach-batlego",
+      "name": "Mateus Zeca Bezerra da Silva",
+      "email": "mateusssilva@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
       "role": "team_coach",
-      "teamId": "team-1",
-      "title": "Representante Titanium 4022",
-      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-10T09:00:00.000Z"
+      "teamId": "team-batlego",
+      "title": "Técnico(a) - BATLEGO",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
     },
     {
-      "id": "user-rep-cybergears",
-      "name": "Representante CyberGears 810",
-      "email": "cybergears@robotica.org",
-      "passwordHash": "$2b$10$Q3cRSYXUQd6b.RXiVk5dCuqPlevS6CsOAzeZ3G/D6KwHXIWoYXfsa",
-      "role": "team_coach",
-      "teamId": "team-2",
-      "title": "Representante CyberGears 810",
-      "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-01-15T09:00:00.000Z"
+      "id": "user-student-batlego",
+      "name": "Enio Josias de Melo",
+      "email": "enio.melo@rn.aluno.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-batlego",
+      "title": "Representante Estudantil - BATLEGO",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
     },
     {
-      "id": "user-rep-sparkbots",
-      "name": "Representante SparkBots 105",
-      "email": "sparkbots@robotica.org",
-      "passwordHash": "$2b$10$Q3cRSYXUQd6b.RXiVk5dCuqPlevS6CsOAzeZ3G/D6KwHXIWoYXfsa",
+      "id": "user-coach-guarani",
+      "name": "Sheyla de Paula Cardoso",
+      "email": "sheylaferreira@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
       "role": "team_coach",
-      "teamId": "team-3",
-      "title": "Representante SparkBots 105",
-      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-      "createdAt": "2026-02-01T09:00:00.000Z"
+      "teamId": "team-guarani",
+      "title": "Técnico(a) - GUARANI",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-student-guarani",
+      "name": "Angélica Pinheiro",
+      "email": "angelica.pinheiro@rn.aluno.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-guarani",
+      "title": "Representante Estudantil - GUARANI",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-coach-carcara-lux",
+      "name": "Zania Christina Feitosa Lobo Gomes",
+      "email": "zaniagomes@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
+      "role": "team_coach",
+      "teamId": "team-carcara-lux",
+      "title": "Técnico(a) - CARCARÁ LUX",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-student-carcara-lux",
+      "name": "Maria Vitória Mariano Jales",
+      "email": "maria.mariano@rn.aluno.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-carcara-lux",
+      "title": "Representante Estudantil - CARCARÁ LUX",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-coach-p0t1bat",
+      "name": "Terciano Fonseca de Souza",
+      "email": "tercianosouza@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
+      "role": "team_coach",
+      "teamId": "team-p0t1bat",
+      "title": "Técnico(a) - P0T1BAT",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-student-p0t1bat",
+      "name": "Julia Letícia Da Silva Aguiar",
+      "email": "julia.aguiar@rn.aluno.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-p0t1bat",
+      "title": "Representante Estudantil - P0T1BAT",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-coach-jovens-punares",
+      "name": "Paulo Cesar Palhares de Lima",
+      "email": "paulolima@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
+      "role": "team_coach",
+      "teamId": "team-jovens-punares",
+      "title": "Técnico(a) - JOVENS PUNARÉS",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-student-jovens-punares",
+      "name": "Heitor Guedes Santos da Silva",
+      "email": "heitorguedessantosdasilva@gmail.com",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-jovens-punares",
+      "title": "Representante Estudantil - JOVENS PUNARÉS",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-coach-techno-sertao",
+      "name": "Micael Silva dos Santos",
+      "email": "micaelsantos@rn.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOQHfRdPUz22Sqss3y18QQCTUiZbJV4ua",
+      "role": "team_coach",
+      "teamId": "team-techno-sertao",
+      "title": "Técnico(a) - TECHNO SERTÃO",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "user-student-techno-sertao",
+      "name": "Lara Silva",
+      "email": "lara.silva@rn.aluno.sesi.org.br",
+      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOqmfqkXw9AacJbJ3g/As1aSuEUAzW0Z2",
+      "role": "student",
+      "teamId": "team-techno-sertao",
+      "title": "Representante Estudantil - TECHNO SERTÃO",
+      "avatar": "",
+      "createdAt": "2026-02-01T10:00:00.000Z"
     }
   ],
   "sponsorships": [],
@@ -163,16 +229,16 @@
   "auditLogs": [
     {
       "id": "log-init",
-      "timestamp": "2026-10-02T20:41:00.000Z",
+      "timestamp": "2026-10-02T20:53:00.000Z",
       "userId": "user-system-admin",
       "userName": "Sistema de Transparência",
       "userRole": "system_admin",
       "teamId": null,
       "teamName": null,
       "action": "SISTEMA_INICIALIZADO",
-      "entityType": "system",
+      "entityType": "team",
       "entityId": "root",
-      "description": "Base de dados inicializada para operação oficial. Dados de teste e logs demonstrativos removidos."
+      "description": "Equipes reais do SESI RN e contas de técnicos e alunos cadastradas com sucesso."
     }
   ],
   "demoAccountsMerged": true

@@ -27,11 +27,11 @@ import {
   LayoutDashboard
 } from 'lucide-react'
 
-const API_BASE = import.meta.env.VITE_API_URL || ''
+import { adminApi } from '../services/adminApi'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type AdminRole = 'technical_lead' | 'team_coach' | 'student'
+type AdminRole = 'system_admin' | 'technical_lead' | 'team_coach' | 'student'
 
 interface AdminTeam {
   id: string
@@ -59,12 +59,14 @@ interface AdminUser {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function roleLabel(role: AdminRole) {
+  if (role === 'system_admin') return 'Administrador do Sistema'
   if (role === 'technical_lead') return 'Responsável Técnica'
   if (role === 'team_coach') return 'Técnico da Equipe'
   return 'Aluno'
 }
 
 function roleColor(role: AdminRole) {
+  if (role === 'system_admin') return '#f59e0b'
   if (role === 'technical_lead') return '#06b6d4'
   if (role === 'team_coach') return '#10b981'
   return '#6366f1'
@@ -72,11 +74,12 @@ function roleColor(role: AdminRole) {
 
 function RoleBadge({ role }: { role: AdminRole }) {
   const colors: Record<AdminRole, { bg: string; text: string; icon: React.ReactNode }> = {
+    system_admin: { bg: 'rgba(245,158,11,0.12)', text: '#f59e0b', icon: <Crown size={12} /> },
     technical_lead: { bg: 'rgba(6,182,212,0.12)', text: '#06b6d4', icon: <Crown size={12} /> },
     team_coach: { bg: 'rgba(16,185,129,0.12)', text: '#10b981', icon: <UserCheck size={12} /> },
     student: { bg: 'rgba(99,102,241,0.12)', text: '#818cf8', icon: <GraduationCap size={12} /> },
   }
-  const c = colors[role]
+  const c = colors[role] || colors.student
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -232,8 +235,7 @@ export interface AdminPanelProps {
   initialTab?: 'teams' | 'users' | 'overview'
 }
 
-export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview' }: AdminPanelProps) {
-  const authToken = token || localStorage.getItem('token') || ''
+export function AdminPanel({ adminUser, onLogout, initialTab = 'overview' }: AdminPanelProps) {
   const { toasts, show: toast } = useAdminToast()
   const [tab, setTab] = useState<'teams' | 'users' | 'overview'>(initialTab)
 
@@ -248,32 +250,28 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
   const [userModal, setUserModal] = useState<{ mode: 'create' | 'edit'; data?: AdminUser } | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'user' | 'team'; id: string; name: string } | null>(null)
 
-  const headers = { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json' }
-
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [teamsRes, usersRes] = await Promise.all([
-        fetch(`${API_BASE}/api/teams`, { headers }),
-        fetch(`${API_BASE}/api/admin/users`, { headers })
+      const [teamsData, usersData] = await Promise.all([
+        adminApi.getTeams(),
+        adminApi.getUsers()
       ])
-      if (!teamsRes.ok || !usersRes.ok) throw new Error('Falha ao carregar dados.')
-      setTeams(await teamsRes.json())
-      setUsers(await usersRes.json())
+      setTeams(teamsData)
+      setUsers(usersData)
     } catch (err: any) {
       toast(err.message || 'Erro ao carregar dados.', 'error')
     } finally {
       setLoading(false)
     }
-  }, [authToken])
+  }, [])
 
   useEffect(() => { loadData() }, [loadData])
 
   // ── Delete Handlers ──
   const handleDeleteUser = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/users/${id}`, { method: 'DELETE', headers })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      await adminApi.deleteUser(id)
       toast('Usuário excluído com sucesso.', 'success')
       setUsers(prev => prev.filter(u => u.id !== id))
     } catch (err: any) { toast(err.message, 'error') }
@@ -281,8 +279,7 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
 
   const handleDeleteTeam = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/admin/teams/${id}`, { method: 'DELETE', headers })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
+      await adminApi.deleteTeam(id)
       toast('Equipe excluída com sucesso.', 'success')
       setTeams(prev => prev.filter(t => t.id !== id))
       setUsers(prev => prev.map(u => u.teamId === id ? { ...u, teamId: null, team: null } : u))
@@ -329,7 +326,6 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
         <TeamFormModal
           mode={teamModal.mode}
           data={teamModal.data}
-          token={authToken}
           onClose={() => setTeamModal(null)}
           onSuccess={(team) => {
             if (teamModal.mode === 'create') {
@@ -351,7 +347,6 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
           mode={userModal.mode}
           data={userModal.data}
           teams={teams}
-          token={authToken}
           onClose={() => setUserModal(null)}
           onSuccess={(user) => {
             if (userModal.mode === 'create') {
@@ -393,7 +388,7 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ textAlign: 'right' }}>
               <div style={{ color: '#f1f5f9', fontSize: '0.875rem', fontWeight: 600 }}>{adminUser.name}</div>
-              <div style={{ color: '#06b6d4', fontSize: '0.72rem', fontWeight: 600 }}>Responsável Técnica</div>
+              <div style={{ color: roleColor(adminUser.role), fontSize: '0.72rem', fontWeight: 600 }}>{roleLabel(adminUser.role)}</div>
             </div>
             <button
               onClick={onLogout}
@@ -804,10 +799,9 @@ export function AdminPanel({ token, adminUser, onLogout, initialTab = 'overview'
 
 // ── Team Form Modal ────────────────────────────────────────────────────────────
 
-function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
+function TeamFormModal({ mode, data, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminTeam
-  token: string
   onClose: () => void
   onSuccess: (team: AdminTeam) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -833,18 +827,17 @@ function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
     }
     setSaving(true)
     try {
-      const url = mode === 'create' ? `${API_BASE}/api/teams` : `${API_BASE}/api/admin/teams/${data!.id}`
-      const method = mode === 'create' ? 'POST' : 'PUT'
-      const res = await fetch(url, {
-        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      onSuccess(await res.json())
+      let savedTeam: any
+      if (mode === 'create') {
+        savedTeam = await adminApi.createTeam(form)
+      } else {
+        savedTeam = await adminApi.updateTeam(data!.id, form)
+      }
+      onSuccess(savedTeam)
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
-  const categories = ['FRC - FIRST Robotics Competition', 'FTC - FIRST Tech Challenge', 'FLL - FIRST Lego League', 'Robótica de Combate', 'Robôs Autônomos', 'Outra Categoria']
+  const categories = ['FRC - FIRST Robotics Competition', 'FTC - FIRST Tech Challenge', 'FLL - FIRST Lego League', 'STEAM RACING', 'Robótica de Combate', 'Robôs Autônomos', 'Outra Categoria']
 
   return (
     <Modal title={mode === 'create' ? 'Nova Equipe' : `Editar Equipe: ${data?.name}`} onClose={onClose}>
@@ -906,11 +899,10 @@ function TeamFormModal({ mode, data, token, onClose, onSuccess, toast }: {
 
 // ── User Form Modal ────────────────────────────────────────────────────────────
 
-function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: {
+function UserFormModal({ mode, data, teams, onClose, onSuccess, toast }: {
   mode: 'create' | 'edit'
   data?: AdminUser
   teams: AdminTeam[]
-  token: string
   onClose: () => void
   onSuccess: (user: AdminUser) => void
   toast: (msg: string, type?: 'success' | 'error' | 'info') => void
@@ -941,14 +933,13 @@ function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: 
     if (form.password) body.password = form.password
 
     try {
-      const url = mode === 'create' ? `${API_BASE}/api/admin/users` : `${API_BASE}/api/admin/users/${data!.id}`
-      const method = mode === 'create' ? 'POST' : 'PUT'
-      const res = await fetch(url, {
-        method, headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error) }
-      onSuccess(await res.json())
+      let savedUser: any
+      if (mode === 'create') {
+        savedUser = await adminApi.createUser(body)
+      } else {
+        savedUser = await adminApi.updateUser(data!.id, body)
+      }
+      onSuccess(savedUser)
     } catch (err: any) { toast(err.message, 'error') } finally { setSaving(false) }
   }
 
@@ -961,7 +952,7 @@ function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: 
           <input style={inputStyle} value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ex: Gabriel Menezes" required />
         </Field>
         <Field label="E-mail Institucional" required>
-          <input type="email" style={inputStyle} value={form.email} onChange={e => set('email', e.target.value)} placeholder="Ex: gabriel@robotica.org" required />
+          <input type="email" style={inputStyle} value={form.email} onChange={e => set('email', e.target.value)} placeholder="Ex: gabriel@rn.sesi.org.br" required />
         </Field>
         <Field label={mode === 'create' ? 'Senha de Acesso' : 'Nova Senha (deixe em branco para manter)'}>
           <div style={{ position: 'relative' }}>
@@ -982,7 +973,12 @@ function UserFormModal({ mode, data, teams, token, onClose, onSuccess, toast }: 
           </div>
         </Field>
         <Field label="Papel / Função" required>
-          <select style={{ ...inputStyle }} value={form.role} onChange={e => { set('role', e.target.value); if (e.target.value === 'technical_lead') set('teamId', '') }} required>
+          <select style={{ ...inputStyle }} value={form.role} onChange={e => {
+            const r = e.target.value as AdminRole
+            set('role', r)
+            if (r === 'technical_lead' || r === 'system_admin') set('teamId', '')
+          }} required>
+            <option value="system_admin">Administrador do Sistema (Acesso Geral & TI)</option>
             <option value="technical_lead">Responsável Técnica (Supervisão Geral)</option>
             <option value="team_coach">Técnico da Equipe (Aprovação de Compras)</option>
             <option value="student">Aluno (Solicitação de Compras)</option>
@@ -1035,16 +1031,10 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
     setError('')
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/admin/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Falha ao autenticar.')
+      const data = await adminApi.login(email, password)
       onSuccess(data.token, data.user)
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Falha ao autenticar.')
     } finally {
       setLoading(false)
     }
@@ -1074,7 +1064,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
             Painel Administrativo
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.875rem' }}>
-            Acesso restrito à Responsável Técnica
+            Acesso restrito a Administradores do Sistema
           </p>
         </div>
 
@@ -1087,13 +1077,13 @@ function AdminLogin({ onSuccess }: { onSuccess: (token: string, user: AdminUser)
           boxShadow: '0 24px 60px rgba(0,0,0,0.5)'
         }}>
           <form onSubmit={handleLogin}>
-            <Field label="E-mail da Responsável Técnica" required>
+            <Field label="E-mail de Acesso" required>
               <input
                 type="email"
                 style={inputStyle}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="responsavel@robotica.org"
+                placeholder="admin@rn.sesi.org.br"
                 required
                 autoFocus
               />

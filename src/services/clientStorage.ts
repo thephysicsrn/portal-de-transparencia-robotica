@@ -13,7 +13,7 @@ import type {
 } from '../types'
 import { INITIAL_MOCK_DATA } from './mockData'
 
-const STORAGE_KEY = 'portal_robotica_prod_v3'
+const STORAGE_KEY = 'portal_robotica_prod_v4'
 
 interface ClientDbState {
   users: User[]
@@ -229,6 +229,7 @@ export const clientStorage = {
     // Check credentials (accept standard demo passwords or any >= 3 chars during presentation)
     const valid =
       pass.length >= 3 ||
+      pass === 'SesiBrasil2027' ||
       pass === 'admin123' ||
       pass === 'ti123' ||
       pass === 'tecnico123' ||

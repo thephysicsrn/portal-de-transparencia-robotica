@@ -81,9 +81,9 @@
     },
     {
       "id": "user-system-admin",
-      "name": "Administrador de TI",
-      "email": "ti@robotica.org",
-      "passwordHash": "$2b$10$TgizCAGKouUVgWhqMmEpIOYTUywd7eVgzWtGgQYUzViQNuGsxHpAW",
+      "name": "Administrador do Sistema",
+      "email": "admin@rn.sesi.org.br",
+      "passwordHash": "$2b$10$yTu6WLPMF8.hnru/8YD86Oa0PwgwNGklcnV4xb.ortQmc.SlnYtNi",
       "role": "system_admin",
       "teamId": null,
       "title": "Administrador do Sistema & TI",

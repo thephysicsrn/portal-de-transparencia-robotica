@@ -84,9 +84,9 @@ export const INITIAL_MOCK_DATA: ClientDatabase = {
   users: [
     {
       id: "user-system-admin",
-      name: "Administrador de TI",
-      email: "ti@robotica.org",
-      passwordHash: "$2b$10$.PINbwShVtmqNMQJd3qH8.1UPB9.oa4/Sf49UiHmdFmwVXgCdAEXm", // ti123
+      name: "Administrador do Sistema",
+      email: "admin@rn.sesi.org.br",
+      passwordHash: "$2b$10$yTu6WLPMF8.hnru/8YD86Oa0PwgwNGklcnV4xb.ortQmc.SlnYtNi", // SesiBrasil2027
       role: "system_admin",
       teamId: null,
       title: "Administrador do Sistema & TI",

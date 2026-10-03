@@ -110,9 +110,9 @@ function getDefaultDatabase(): DatabaseSchema {
     },
     {
       id: 'user-system-admin',
-      name: 'Administrador de TI',
-      email: 'ti@robotica.org',
-      passwordHash: tiPassword,
+      name: 'Administrador do Sistema',
+      email: 'admin@rn.sesi.org.br',
+      passwordHash: bcrypt.hashSync('SesiBrasil2027', salt),
       role: 'system_admin',
       teamId: null,
       title: 'Administrador do Sistema & TI',

@@ -88,10 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (cancelled) return
 
         if (!profile) {
-          // conta existe no Auth mas não foi criada pelo painel administrativo
-          await signOutFirebase()
-          setToken(null)
-          setUser(null)
           setIsLoading(false)
           return
         }
@@ -100,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('user', JSON.stringify(profile))
         const idToken = await firebaseUser.getIdToken()
         setToken(idToken)
-        await loadTeams()
+        loadTeams().catch(console.error)
         setIsLoading(false)
       } catch (err) {
         console.error('Erro ao restaurar sessão do Firebase:', err)
@@ -134,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (token) {
       refreshUser()
-      loadTeams()
+      loadTeams().catch(console.error)
     } else {
       setIsLoading(false)
     }
@@ -157,7 +153,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const firebaseUser = await signInWithEmail(credentials.email, credentials.password)
       const profile = await fetchProfile(firebaseUser.uid)
       if (!profile) {
-        await signOutFirebase()
         throw new Error('Este e-mail não está cadastrado no portal. Fale com o administrador.')
       }
       const idToken = await firebaseUser.getIdToken()
@@ -167,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSelectedTeamId(
         profile.role === 'system_admin' || profile.role === 'technical_lead' ? 'all' : profile.teamId || 'all'
       )
-      await loadTeams()
+      loadTeams().catch(console.error)
       return
     }
 

@@ -244,9 +244,13 @@ export async function fetchTeams(): Promise<Team[]> {
   }
 
   // chave PIX fica em teams/{id}/private, legível só pela equipe e pelo admin
+  const current = getCurrentProfile()
+  const canReadPrivate = (teamId: string) =>
+    current && (current.role === 'system_admin' || current.role === 'technical_lead' || current.teamId === teamId)
+
   return Promise.all(
     teams.map(async t => {
-      if (!t.bankAccount) return t
+      if (!t.bankAccount || !canReadPrivate(t.id)) return { ...t, bankAccount: '' }
       try {
         const priv = await getDoc(doc(requireDb(), COLLECTIONS.teams, t.id, 'private', 'data'))
         return { ...t, bankAccount: priv.exists() ? (priv.data().bankAccount ?? '') : '' }

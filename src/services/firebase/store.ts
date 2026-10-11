@@ -461,7 +461,7 @@ export async function createPurchaseRequest(data: any, actor?: User | null) {
 
   await appendAuditLog({
     teamId: record.teamId,
-    teamName: record.teamName,
+    teamName: record.teamName || 'Equipe',
     action: 'CRIOU_SOLICITACAO_COMPRA',
     entityType: 'purchase_request',
     entityId: id,
@@ -514,7 +514,7 @@ export async function updatePurchaseStatus(
 
   await appendAuditLog({
     teamId: req.teamId,
-    teamName: req.teamName,
+    teamName: req.teamName || 'Equipe',
     action: 'ALTEROU_STATUS_COMPRA',
     entityType: 'purchase_request',
     entityId: id,
@@ -599,7 +599,7 @@ export async function completePurchase(
   // 3. Registra log de auditoria
   await appendAuditLog({
     teamId: req.teamId,
-    teamName: req.teamName,
+    teamName: req.teamName || 'Equipe',
     action: 'CONCLUIU_COMPRA',
     entityType: 'purchase_request',
     entityId: id,
@@ -622,7 +622,7 @@ export async function deleteRecord(collectionName: string, id: string) {
 
 export async function appendAuditLog(entry: {
   teamId: string | null
-  teamName: string
+  teamName?: string | null
   action: string
   entityType: string
   entityId: string
@@ -638,7 +638,7 @@ export async function appendAuditLog(entry: {
     userName: entry.user?.name || 'Sistema',
     userRole: entry.user?.role || 'technical_lead',
     teamId: entry.teamId,
-    teamName: entry.teamName,
+    teamName: entry.teamName || 'Equipe',
     action: entry.action,
     entityType: entry.entityType,
     entityId: entry.entityId,

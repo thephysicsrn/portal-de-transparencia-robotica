@@ -87,9 +87,18 @@ const AppMain: React.FC = () => {
         {currentTab === 'dashboard' && (
           <DashboardView
             onNavigateTab={handleNavigateTab}
-            onOpenNewSponsorship={() => setIsSponsorshipModalOpen(true)}
-            onOpenNewExpense={() => setIsExpenseModalOpen(true)}
-            onOpenNewPurchase={() => setIsPurchaseModalOpen(true)}
+            onOpenNewSponsorship={() => {
+              setCurrentTab('sponsorships')
+              setIsSponsorshipModalOpen(true)
+            }}
+            onOpenNewExpense={() => {
+              setCurrentTab('expenses')
+              setIsExpenseModalOpen(true)
+            }}
+            onOpenNewPurchase={() => {
+              setCurrentTab('purchases')
+              setIsPurchaseModalOpen(true)
+            }}
             onSelectPurchaseRequest={handleSelectPurchaseFromDashboard}
             refreshTrigger={refreshTrigger}
           />

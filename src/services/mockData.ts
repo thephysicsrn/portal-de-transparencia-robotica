@@ -108,7 +108,7 @@ export const INITIAL_MOCK_DATA: ClientDatabase = {
     {
       id: "user-coach-batlego",
       name: "Mateus Zeca Bezerra da Silva",
-      email: "mateusssilva@rn.sesi.org.br",
+      email: "mateussilva@rn.sesi.org.br",
       passwordHash: COACH_PASSWORD_HASH,
       role: "team_coach",
       teamId: "team-batlego",

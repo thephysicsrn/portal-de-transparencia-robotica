@@ -147,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Role-Specific Alert Banners */}
-      {isCoach && metrics.pendingRequestsCount > 0 && (
+      {(isCoach || isTechnicalLead || isSystemAdmin) && metrics.pendingRequestsCount > 0 && (
         <div style={{
           background: 'rgba(245, 158, 11, 0.1)',
           border: '1px solid var(--accent-amber)',
@@ -163,10 +163,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Clock size={22} color="var(--accent-amber)" />
             <div>
               <strong style={{ color: 'var(--accent-amber)', fontSize: '0.95rem' }}>
-                {metrics.pendingRequestsCount} solicitação(ões) de compras enviada(s) por alunos aguardando sua avaliação!
+                {metrics.pendingRequestsCount} solicitação(ões) de compras enviada(s) por alunos aguardando avaliação!
               </strong>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                Analise e aprove os orçamentos ou solicite ajustes para que os alunos possam adquirir os itens.
+                Analise e delibere sobre os orçamentos ou solicite ajustes para que os alunos possam adquirir os itens.
               </div>
             </div>
           </div>

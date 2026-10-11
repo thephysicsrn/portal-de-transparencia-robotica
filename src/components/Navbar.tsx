@@ -13,9 +13,11 @@ import {
   UserCheck,
   GraduationCap,
   Building,
-  UserCog
+  UserCog,
+  Cloud
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { isFirestoreReady } from '../services/firebase/store'
 import { useToast } from './Toast'
 
 interface NavbarProps {
@@ -99,6 +101,38 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, onDat
                 </div>
               )
             )}
+
+            {/* Connection / Sync Status Badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '5px 12px',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                background: isFirestoreReady ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                color: isFirestoreReady ? 'var(--accent-emerald)' : 'var(--accent-amber)',
+                border: `1px solid ${isFirestoreReady ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
+              }}
+              title={
+                isFirestoreReady
+                  ? 'Banco de dados central Firestore conectado. Todas as alterações são sincronizadas entre todos os dispositivos em tempo real.'
+                  : 'Aviso: Rodando em modo de armazenamento local (offline/localStorage). Configure as variáveis do Firebase para sincronizar entre todos os aparelhos.'
+              }
+            >
+              <Cloud size={13} />
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: isFirestoreReady ? 'var(--accent-emerald)' : 'var(--accent-amber)'
+                }}
+              />
+              <span>{isFirestoreReady ? 'Nuvem Conectada' : 'Modo Offline (Local)'}</span>
+            </div>
 
             {/* User Profile Info */}
             <div className="user-profile-card">

@@ -221,14 +221,29 @@ export const clientStorage = {
     const email = credentials.email.trim().toLowerCase()
     const pass = credentials.password.trim()
 
-    const user = db.users.find(u => u.email.toLowerCase() === email)
+    const user = db.users.find(u => {
+      const uEmail = u.email.toLowerCase()
+      if (uEmail === email) return true
+      if (email === 'mateussilva@rn.sesi.org.br' && uEmail === 'mateusssilva@rn.sesi.org.br') return true
+      if (email === 'mateusssilva@rn.sesi.org.br' && uEmail === 'mateussilva@rn.sesi.org.br') return true
+      return false
+    })
+
     if (!user) {
       throw new Error('E-mail não encontrado. Verifique o endereço informado ou solicite o acesso ao administrador do portal.')
+    }
+
+    // Se o email salvo no storage tinha o typo de 3 's', normaliza agora
+    if (user.email.toLowerCase() === 'mateusssilva@rn.sesi.org.br') {
+      user.email = 'mateussilva@rn.sesi.org.br'
+      saveState(db)
     }
 
     // Check credentials (accept standard demo passwords or any >= 3 chars during presentation)
     const valid =
       pass.length >= 3 ||
+      pass === 'tecnico@2026' ||
+      pass === 'aluno@2026' ||
       pass === 'SesiBrasil2027' ||
       pass === 'admin123' ||
       pass === 'ti123' ||

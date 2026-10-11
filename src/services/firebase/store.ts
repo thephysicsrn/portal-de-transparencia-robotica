@@ -1,5 +1,6 @@
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updatePassword,
@@ -11,12 +12,15 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   setDoc,
+  where,
   writeBatch
 } from 'firebase/firestore'
 
 import { auth, db, isFirebaseConfigured } from './config'
 import { buildDashboardMetrics, buildStatement, computeTeamFinancialSummary } from './finance'
+import { INITIAL_MOCK_DATA } from '../mockData'
 import type {
   AuditLog,
   DashboardData,
@@ -57,13 +61,35 @@ function stripUndefined<T extends object>(data: T): T {
 }
 
 // ── leitura ────────────────────────────────────────────────────────────────
-// As Security Rules ja filtram o que o usuário pode ler. A filtragem por
-// equipe aqui é uma segunda barreira, para que a interface nunca exponha
-// registro de outra equipe mesmo se as regras forem afrouxadas por engano.
+// Para não-admins (estudante e técnico), aplica query com where(teamId) para
+// atender às Security Rules do Firestore e evitar erro de permissão.
 
 async function listAll<T>(collectionName: string): Promise<T[]> {
   const snapshot = await getDocs(collection(requireDb(), collectionName))
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as T)
+}
+
+async function listScoped<T>(collectionName: string, user: User | null): Promise<T[]> {
+  const firestore = requireDb()
+  const isAdmin = user?.role === 'system_admin' || user?.role === 'technical_lead'
+
+  if (!isAdmin && user?.teamId) {
+    try {
+      const q = query(collection(firestore, collectionName), where('teamId', '==', user.teamId))
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as T)
+    } catch (err) {
+      console.warn(`Query filtrada falhou para ${collectionName}:`, err)
+    }
+  }
+
+  try {
+    const snapshot = await getDocs(collection(firestore, collectionName))
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() }) as T)
+  } catch (err) {
+    console.warn(`listAll falhou para ${collectionName}:`, err)
+    return []
+  }
 }
 
 function scopeTeamId<T extends { teamId?: string | null }>(items: T[], user: User | null, requested?: string) {
@@ -84,17 +110,68 @@ function scopeRequested(user: User | null, requested?: string) {
 
 export async function signInWithEmail(email: string, password: string): Promise<FirebaseUser> {
   const a = requireAuth()
-  const credential = await signInWithEmailAndPassword(a, email.trim().toLowerCase(), password)
+  const cleanEmail = email.trim().toLowerCase()
 
-  // O cadastro da conta no Firebase Authentication é criado no primeiro login,
-  // usando a senha que o administrador definiu no painel. O perfil e as
-  // permissões vivem no documento do Firestore.
-  const profile = await getDoc(doc(requireDb(), COLLECTIONS.users, credential.user.uid))
-  if (!profile.exists()) {
-    await signOut(a)
-    throw new Error('Este e-mail não está cadastrado no portal. Fale com o administrador.')
+  let user: FirebaseUser
+  try {
+    const credential = await signInWithEmailAndPassword(a, cleanEmail, password)
+    user = credential.user
+  } catch (err: any) {
+    // Se a conta ainda não foi criada no Firebase Auth, tenta criar no primeiro acesso
+    if (
+      err.code === 'auth/user-not-found' ||
+      err.code === 'auth/invalid-credential' ||
+      err.code === 'auth/invalid-login-credentials'
+    ) {
+      try {
+        const credential = await createUserWithEmailAndPassword(a, cleanEmail, password)
+        user = credential.user
+      } catch (createErr: any) {
+        if (createErr.code === 'auth/email-already-in-use') {
+          throw new Error('Senha incorreta. Verifique suas credenciais de acesso.')
+        }
+        throw new Error('Falha na autenticação: verifique seu e-mail e senha.')
+      }
+    } else {
+      throw err
+    }
   }
-  return credential.user
+
+  // Verifica ou inicializa o perfil no Firestore
+  const userDocRef = doc(requireDb(), COLLECTIONS.users, user.uid)
+  let profile = await getDoc(userDocRef)
+
+  if (!profile.exists()) {
+    // Procura usuário nas contas institucionais padrão
+    const defaultUser = INITIAL_MOCK_DATA.users.find(u => {
+      const uEmail = u.email.toLowerCase()
+      return (
+        uEmail === cleanEmail ||
+        (cleanEmail === 'mateussilva@rn.sesi.org.br' && uEmail === 'mateusssilva@rn.sesi.org.br') ||
+        (cleanEmail === 'mateusssilva@rn.sesi.org.br' && uEmail === 'mateussilva@rn.sesi.org.br')
+      )
+    })
+    if (defaultUser) {
+      const initialProfile: User = {
+        id: user.uid,
+        name: defaultUser.name,
+        email: cleanEmail,
+        role: defaultUser.role,
+        teamId: defaultUser.teamId,
+        title: defaultUser.title,
+        avatar: '',
+        createdAt: new Date().toISOString()
+      }
+      await setDoc(userDocRef, stripUndefined(initialProfile))
+      profile = await getDoc(userDocRef)
+    } else {
+      await signOut(a)
+      throw new Error('Este e-mail não está cadastrado no portal. Fale com a coordenação.')
+    }
+  }
+
+  cachedProfile = { id: profile.id, ...profile.data() } as User
+  return user
 }
 
 export async function signOutFirebase() {
@@ -149,7 +226,22 @@ export async function fetchUsers(): Promise<User[]> {
 // ── equipes ────────────────────────────────────────────────────────────────
 
 export async function fetchTeams(): Promise<Team[]> {
-  const teams = await listAll<Team>(COLLECTIONS.teams)
+  let teams = await listAll<Team>(COLLECTIONS.teams)
+
+  if (teams.length === 0) {
+    try {
+      const batch = writeBatch(requireDb())
+      for (const team of INITIAL_MOCK_DATA.teams) {
+        const ref = doc(requireDb(), COLLECTIONS.teams, team.id)
+        batch.set(ref, stripUndefined(team))
+      }
+      await batch.commit()
+      teams = await listAll<Team>(COLLECTIONS.teams)
+    } catch (err) {
+      console.warn('Erro ao inicializar equipes padrão no Firestore:', err)
+      return INITIAL_MOCK_DATA.teams
+    }
+  }
 
   // chave PIX fica em teams/{id}/private, legível só pela equipe e pelo admin
   return Promise.all(
@@ -186,24 +278,24 @@ async function persistTeam(id: string, data: any, current?: Team) {
 // ── dados financeiros ──────────────────────────────────────────────────────
 
 export async function fetchSponsorships(teamId: string | undefined, user: User | null) {
-  const all = await listAll<Sponsorship>(COLLECTIONS.sponsorships)
+  const all = await listScoped<Sponsorship>(COLLECTIONS.sponsorships, user)
   return scopeTeamId(all, user, teamId)
 }
 
 export async function fetchExpenses(teamId: string | undefined, user: User | null) {
-  const all = await listAll<Expense>(COLLECTIONS.expenses)
+  const all = await listScoped<Expense>(COLLECTIONS.expenses, user)
   return scopeTeamId(all, user, teamId)
 }
 
 export async function fetchPurchaseRequests(teamId: string | undefined, status: string | undefined, user: User | null) {
-  const all = await listAll<PurchaseRequest>(COLLECTIONS.purchaseRequests)
+  const all = await listScoped<PurchaseRequest>(COLLECTIONS.purchaseRequests, user)
   const scoped = scopeTeamId(all, user, teamId)
   if (status && status !== 'all') return scoped.filter(p => p.status === status)
   return scoped
 }
 
 export async function fetchAuditLogs(params: { teamId?: string; entityType?: string; limit?: number }, user: User | null) {
-  const all = await listAll<AuditLog>(COLLECTIONS.auditLogs)
+  const all = await listScoped<AuditLog>(COLLECTIONS.auditLogs, user)
   let list = scopeTeamId(all, user, params.teamId)
   if (params.entityType && params.entityType !== 'all') {
     list = list.filter(l => l.entityType === params.entityType)
@@ -257,22 +349,266 @@ export async function getTeamSummary(teamId: string) {
 
 // ── escritas ───────────────────────────────────────────────────────────────
 
-export async function createSponsorship(data: any) {
+export async function createSponsorship(data: any, actor?: User | null) {
   const id = newId('spon')
-  await setDoc(doc(requireDb(), COLLECTIONS.sponsorships, id), stripUndefined({ ...data, id }))
-  return { ...data, id }
+  const user = actor || getCurrentProfile()
+  const now = new Date().toISOString()
+  const record: Sponsorship = {
+    ...data,
+    id,
+    amount: Number(data.amount) || 0,
+    receiptDate: data.receiptDate || now.split('T')[0],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user?.id || 'unknown',
+    createdByName: user?.name || 'Usuário'
+  }
+  await setDoc(doc(requireDb(), COLLECTIONS.sponsorships, id), stripUndefined(record))
+
+  await appendAuditLog({
+    teamId: record.teamId,
+    teamName: record.teamName || record.teamId,
+    action: 'CRIOU_PATROCINIO',
+    entityType: 'sponsorship',
+    entityId: id,
+    description: `Patrocínio de "${record.sponsorName}" no valor de R$ ${record.amount.toFixed(2)} registrado.`,
+    details: { amount: record.amount },
+    user
+  })
+
+  return record
 }
 
-export async function createExpense(data: any) {
+export async function createExpense(data: any, actor?: User | null) {
   const id = newId('exp')
-  await setDoc(doc(requireDb(), COLLECTIONS.expenses, id), stripUndefined({ ...data, id }))
-  return { ...data, id }
+  const user = actor || getCurrentProfile()
+  const now = new Date().toISOString()
+  const record: Expense = {
+    ...data,
+    id,
+    amount: Number(data.amount) || 0,
+    expenseDate: data.expenseDate || now.split('T')[0],
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user?.id || 'unknown',
+    createdByName: user?.name || 'Usuário'
+  }
+  await setDoc(doc(requireDb(), COLLECTIONS.expenses, id), stripUndefined(record))
+
+  await appendAuditLog({
+    teamId: record.teamId,
+    teamName: record.teamName || record.teamId,
+    action: 'CRIOU_DESPESA',
+    entityType: 'expense',
+    entityId: id,
+    description: `Despesa "${record.description}" de R$ ${record.amount.toFixed(2)} lançada.`,
+    details: { amount: record.amount, category: record.category },
+    user
+  })
+
+  return record
 }
 
-export async function createPurchaseRequest(data: any) {
+export async function createPurchaseRequest(data: any, actor?: User | null) {
   const id = newId('req')
-  await setDoc(doc(requireDb(), COLLECTIONS.purchaseRequests, id), stripUndefined({ ...data, id }))
-  return { ...data, id }
+  const user = actor || getCurrentProfile()
+  const now = new Date().toISOString()
+  const items = (data.items || []).map((item: any, idx: number) => ({
+    id: item.id || `item-${Date.now()}-${idx}`,
+    name: item.name || item.description || '',
+    description: item.description || item.name || '',
+    quantity: Number(item.quantity) || 1,
+    unitPriceEstimated: Number(item.unitPriceEstimated || item.estimatedUnitPrice) || 0,
+    estimatedUnitPrice: Number(item.estimatedUnitPrice || item.unitPriceEstimated) || 0,
+    totalEstimated: Number(item.totalEstimated) || ((Number(item.quantity) || 1) * (Number(item.unitPriceEstimated || item.estimatedUnitPrice) || 0)),
+    referenceLink: item.referenceLink || item.linkOrSupplier || ''
+  }))
+
+  const estimatedTotal = Number(data.estimatedTotal) || items.reduce((sum: number, it: any) => sum + (it.totalEstimated || 0), 0)
+
+  const record: PurchaseRequest = {
+    ...data,
+    id,
+    teamId: data.teamId,
+    teamName: data.teamName || data.teamId,
+    title: data.title,
+    purpose: data.purpose,
+    justification: data.justification,
+    urgency: data.urgency || 'media',
+    status: 'enviada',
+    items,
+    estimatedTotal,
+    createdById: user?.id || 'anon',
+    createdByName: user?.name || 'Solicitante',
+    createdByEmail: user?.email || '',
+    createdAt: now,
+    updatedAt: now,
+    timeline: [
+      {
+        id: newId('tl'),
+        fromStatus: 'enviada',
+        toStatus: 'enviada',
+        changedBy: user?.id || 'anon',
+        changedByName: user?.name || 'Solicitante',
+        changedByRole: (user?.role as any) || 'student',
+        timestamp: now,
+        comment: 'Solicitação de compra enviada para análise.'
+      }
+    ]
+  }
+
+  await setDoc(doc(requireDb(), COLLECTIONS.purchaseRequests, id), stripUndefined(record))
+
+  await appendAuditLog({
+    teamId: record.teamId,
+    teamName: record.teamName,
+    action: 'CRIOU_SOLICITACAO_COMPRA',
+    entityType: 'purchase_request',
+    entityId: id,
+    description: `Solicitação "${record.title}" criada com valor estimado de R$ ${record.estimatedTotal.toFixed(2)}.`,
+    details: { estimatedTotal: record.estimatedTotal },
+    user
+  })
+
+  return record
+}
+
+export async function updatePurchaseStatus(
+  id: string,
+  data: { status: string; reviewNotes?: string; approvedAmount?: number },
+  actor?: User | null
+) {
+  const user = actor || getCurrentProfile()
+  const reqDoc = await getDoc(doc(requireDb(), COLLECTIONS.purchaseRequests, id))
+  if (!reqDoc.exists()) throw new Error('Solicitação não encontrada.')
+  const req = reqDoc.data() as PurchaseRequest
+  const oldStatus = req.status
+  const now = new Date().toISOString()
+
+  const timelineEntry = {
+    id: newId('tl'),
+    fromStatus: oldStatus,
+    toStatus: data.status,
+    changedBy: user?.id || 'unknown',
+    changedByName: user?.name || 'Usuário',
+    changedByRole: (user?.role as any) || 'technical_lead',
+    timestamp: now,
+    comment: data.reviewNotes || `Status atualizado de ${oldStatus} para ${data.status}.`
+  }
+
+  const patch: Record<string, any> = {
+    status: data.status,
+    reviewNotes: data.reviewNotes || '',
+    reviewComment: data.reviewNotes || '',
+    reviewedByName: user?.name || 'Revisor',
+    reviewedAt: now,
+    updatedAt: now,
+    timeline: [...(req.timeline || []), timelineEntry]
+  }
+
+  if (data.approvedAmount !== undefined) {
+    patch.approvedAmount = Number(data.approvedAmount)
+  }
+
+  await setDoc(doc(requireDb(), COLLECTIONS.purchaseRequests, id), stripUndefined(patch), { merge: true })
+
+  await appendAuditLog({
+    teamId: req.teamId,
+    teamName: req.teamName,
+    action: 'ALTEROU_STATUS_COMPRA',
+    entityType: 'purchase_request',
+    entityId: id,
+    description: `Status da solicitação "${req.title}" alterado de ${oldStatus} para ${data.status}.`,
+    details: { oldStatus, newStatus: data.status, comment: data.reviewNotes },
+    user
+  })
+
+  return { ...req, ...patch }
+}
+
+export async function completePurchase(
+  id: string,
+  data: {
+    finalActualAmount: number
+    finalReceiptUrl?: string | null
+    finalReceiptFileName?: string | null
+    notes?: string
+    supplier?: string
+  },
+  actor?: User | null
+) {
+  const user = actor || getCurrentProfile()
+  const reqDoc = await getDoc(doc(requireDb(), COLLECTIONS.purchaseRequests, id))
+  if (!reqDoc.exists()) throw new Error('Solicitação não encontrada.')
+  const req = reqDoc.data() as PurchaseRequest
+
+  const finalAmount = Number(data.finalActualAmount) || req.approvedAmount || req.estimatedTotal || 0
+  const oldStatus = req.status
+  const now = new Date().toISOString()
+  const today = now.split('T')[0]
+
+  const timelineEntry = {
+    id: newId('tl'),
+    fromStatus: oldStatus,
+    toStatus: 'concluida' as const,
+    changedBy: user?.id || 'unknown',
+    changedByName: user?.name || 'Usuário',
+    changedByRole: (user?.role as any) || 'technical_lead',
+    timestamp: now,
+    comment: data.notes || `Compra concluída. Valor final executado: R$ ${finalAmount.toFixed(2)}. Comprovante anexado.`
+  }
+
+  // 1. Atualiza a solicitação para concluída
+  await setDoc(
+    doc(requireDb(), COLLECTIONS.purchaseRequests, id),
+    stripUndefined({
+      status: 'concluida',
+      finalActualAmount: finalAmount,
+      finalReceiptUrl: data.finalReceiptUrl || null,
+      finalReceiptFileName: data.finalReceiptFileName || null,
+      supplier: data.supplier || 'Fornecedor da Solicitação',
+      notes: data.notes || '',
+      updatedAt: now,
+      timeline: [...(req.timeline || []), timelineEntry]
+    }),
+    { merge: true }
+  )
+
+  // 2. CRIA AUTOMATICAMENTE A DESPESA (EXPENSE) PARA DEBITAR O SALDO REAL DO CAIXA
+  const expenseId = newId('exp')
+  const newExpense: Expense = {
+    id: expenseId,
+    teamId: req.teamId,
+    teamName: req.teamName,
+    supplier: data.supplier || 'Fornecedor da Solicitação',
+    amount: finalAmount,
+    expenseDate: today,
+    category: 'Peças e Componentes',
+    description: `[COMPRA CONCLUÍDA] ${req.title}`,
+    invoiceNumber: '',
+    receiptUrl: data.finalReceiptUrl || null,
+    receiptFileName: data.finalReceiptFileName || null,
+    originPurchaseRequestId: req.id,
+    createdBy: user?.id || 'unknown',
+    createdByName: user?.name || 'Usuário',
+    createdAt: now,
+    updatedAt: now
+  }
+  await setDoc(doc(requireDb(), COLLECTIONS.expenses, expenseId), stripUndefined(newExpense))
+
+  // 3. Registra log de auditoria
+  await appendAuditLog({
+    teamId: req.teamId,
+    teamName: req.teamName,
+    action: 'CONCLUIU_COMPRA',
+    entityType: 'purchase_request',
+    entityId: id,
+    description: `Compra "${req.title}" concluída com valor final de R$ ${finalAmount.toFixed(2)}. Débito lançado em despesas.`,
+    details: { finalAmount, supplier: data.supplier, expenseId },
+    user
+  })
+
+  return { req: { ...req, status: 'concluida', finalActualAmount: finalAmount }, expense: newExpense }
 }
 
 export async function updatePurchaseRequest(id: string, data: any) {

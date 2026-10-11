@@ -12,6 +12,8 @@ import {
   createExpense,
   createPurchaseRequest,
   updatePurchaseRequest,
+  updatePurchaseStatus,
+  completePurchase,
   deleteRecord,
   appendAuditLog
 } from './firebase/store'
@@ -113,21 +115,15 @@ export const firebaseApi = {
     return { success: true }
   },
 
-  // Decisão sobre a solicitação. As regras do Firestore restringem a mudança
-  // de status ao responsável técnica e ao admin de TI.
+  // Decisão sobre a solicitação (técnico, responsável técnica ou admin)
   updatePurchaseRequestStatus: async (
     id: string,
     data: { status: string; reviewNotes?: string; approvedAmount?: number }
   ) => {
-    const result = await updatePurchaseRequest(id, {
-      status: data.status,
-      reviewNotes: data.reviewNotes,
-      reviewComment: data.reviewNotes,
-      approvedAmount: data.approvedAmount
-    })
-    return result
+    return await updatePurchaseStatus(id, data, getCurrentProfile())
   },
 
+  // Conclui a compra e debita o saldo lançando a despesa correspondente
   completePurchaseRequest: async (
     id: string,
     data: {
@@ -138,14 +134,8 @@ export const firebaseApi = {
       supplier?: string
     }
   ) => {
-    const result = await updatePurchaseRequest(id, {
-      finalActualAmount: data.finalActualAmount,
-      finalReceiptUrl: data.finalReceiptUrl,
-      finalReceiptFileName: data.finalReceiptFileName,
-      notes: data.notes,
-      supplier: data.supplier
-    })
-    return { success: true, request: result }
+    const res = await completePurchase(id, data, getCurrentProfile())
+    return { success: true, ...res }
   },
 
   // Auditoria e manutenção

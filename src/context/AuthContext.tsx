@@ -49,8 +49,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isCoach = user?.role === 'team_coach' || user?.role === 'team_rep'
   const isStudent = user?.role === 'student'
   const isTeamRep = isCoach
-  const canApprovePurchases = isCoach
   const hasGlobalAccess = isSystemAdmin || isTechnicalLead
+  const canApprovePurchases = isCoach || hasGlobalAccess
   const canManageFinances = hasGlobalAccess || isCoach
 
   const loadTeams = async () => {

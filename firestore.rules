@@ -22,12 +22,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function hasUserDoc() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
     function myUserDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     function myRole() {
-      return myUserDoc().data.role;
+      return hasUserDoc() ? myUserDoc().data.role : 'anonymous';
     }
 
     function isAdmin() {
@@ -35,7 +39,7 @@ service cloud.firestore {
     }
 
     function myTeamId() {
-      return myUserDoc().data.teamId;
+      return hasUserDoc() ? myUserDoc().data.teamId : null;
     }
 
     // equipe à qual o usuário logado pertence
@@ -57,8 +61,9 @@ service cloud.firestore {
     // ── usuários ────────────────────────────────────────────────────────────
     match /users/{userId} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == userId) || isMyTeam(resource.data.teamId);
-      // admin cria e edita qualquer usuário; técnico e aluno só editam o próprio perfil
-      allow create, delete: if isAdmin();
+      // admin cria qualquer usuário; qualquer usuário autenticado cria seu próprio perfil inicial
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow delete: if isAdmin();
       allow update: if isAdmin()
                     || (signedIn() && request.auth.uid == userId
                         && request.resource.data.role == resource.data.role
